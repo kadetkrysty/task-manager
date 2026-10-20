@@ -1,0 +1,2297 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Personal Organiser</title>
+  <meta name="theme-color" content="#294b43" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Organiser" />
+  <meta name="description" content="Daily, weekly, monthly and one-off tasks with a built-in calendar. Everything stays on this device." />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E %3Crect width='512' height='512' rx='112' fill='%23253545'/%3E %3Crect x='112' y='128' width='288' height='272' rx='28' fill='none' stroke='%23ffffff' stroke-width='26'/%3E %3Cline x1='112' y1='200' x2='400' y2='200' stroke='%23ffffff' stroke-width='26'/%3E %3Cline x1='184' y1='96' x2='184' y2='152' stroke='%23ffffff' stroke-width='26' stroke-linecap='round'/%3E %3Cline x1='328' y1='96' x2='328' y2='152' stroke='%23ffffff' stroke-width='26' stroke-linecap='round'/%3E %3Cpolyline points='186,298 238,348 330,252' fill='none' stroke='%231abc9c' stroke-width='32' stroke-linecap='round' stroke-linejoin='round'/%3E %3C/svg%3E" type="image/svg+xml" />
+  <link rel="manifest" id="appManifest" />
+  <link rel="apple-touch-icon" id="appleIcon" />
+  <style>
+:root {
+  --navy: #294b43;
+  --navy-2: #365e54;
+  --teal: #35695b;
+  --teal-dark: #244e42;
+  --bg: #f5f4ef;
+  --card: #fffefa;
+  --border: #dedfd5;
+  --text: #293d36;
+  --muted: #69756d;
+  --danger: #aa4b45;
+  --radius: 14px;
+}
+
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html, body { margin: 0; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  font-size: 15px;
+  -webkit-text-size-adjust: 100%;
+}
+
+.topbar {
+  background: var(--navy);
+  color: #fff;
+  padding: calc(14px + env(safe-area-inset-top)) 20px 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.topbar-actions { display: flex; align-items: center; gap: 10px; }
+.sync-pill { font-size: 0.75rem; color: #cfe0ea; white-space: nowrap; }
+.sync-pill.warn { color: #ffd479; }
+.brand { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.brand-icon { width: 40px; height: 40px; border-radius: 10px; flex-shrink: 0; }
+.brand h1 { font-size: 1.2rem; margin: 0; font-weight: 600; }
+.brand p { margin: 2px 0 0; font-size: 0.8rem; color: #b9c6d2; }
+
+.container { max-width: 1200px; margin: 0 auto; padding: 16px 16px calc(32px + env(safe-area-inset-bottom)); }
+
+.toolbar { display: flex; align-items: flex-end; gap: 10px; flex-wrap: wrap; margin-bottom: 14px; }
+.toolbar .field { margin: 0; }
+.toolbar select { min-width: 200px; }
+
+.banner {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  background: #e8f6f2; border-left: 4px solid var(--teal); border-radius: var(--radius);
+  padding: 10px 14px; margin-bottom: 14px; font-size: 0.9rem;
+}
+
+.btn {
+  font: inherit; font-weight: 600; font-size: 0.9rem;
+  border: 1px solid transparent; border-radius: 6px;
+  padding: 9px 16px; cursor: pointer; color: #fff;
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  min-height: 40px;
+}
+.btn:disabled { opacity: 0.55; cursor: not-allowed; }
+.btn-sm { padding: 6px 12px; font-size: 0.85rem; min-height: 34px; }
+.btn-primary { background: var(--teal); }
+.btn-primary:hover:not(:disabled) { background: var(--teal-dark); }
+.btn-dark { background: var(--navy); }
+.btn-dark:hover:not(:disabled) { background: var(--navy-2); }
+.btn-danger { background: var(--danger); }
+.btn-danger-outline { background: #fff; color: var(--danger); border-color: var(--danger); }
+.btn-ghost { background: transparent; border-color: rgba(255,255,255,0.4); }
+.btn-ghost:hover { background: rgba(255,255,255,0.1); }
+.icon-btn { background: none; border: 0; font-size: 1.6rem; line-height: 1; color: var(--muted); cursor: pointer; padding: 4px 8px; }
+
+.tabs { display: none; }
+
+.columns { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+.column { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); display: flex; flex-direction: column; min-height: 240px; }
+.column-header { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 12px 14px; border-bottom: 1px solid var(--border); }
+.column-title { display: flex; align-items: center; gap: 8px; font-weight: 700; }
+.count { background: #6c757d; color: #fff; font-size: 0.75rem; border-radius: 10px; padding: 1px 8px; font-weight: 600; }
+.column-body { padding: 12px; overflow-y: auto; max-height: 70vh; }
+.empty { text-align: center; color: var(--muted); padding: 28px 8px; margin: 0; }
+
+.task {
+  border: 1px solid var(--border); border-left: 4px solid var(--teal);
+  border-radius: 6px; padding: 12px; margin-bottom: 10px; background: #fff; cursor: pointer;
+}
+.task:hover { box-shadow: 0 2px 8px rgba(37,53,69,0.08); }
+.task.completed { opacity: 0.65; }
+.task.completed .task-name { text-decoration: line-through; }
+.task-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
+.task-name { margin: 0 0 4px; font-size: 0.98rem; font-weight: 600; word-break: break-word; }
+.task-desc {
+  margin: 0 0 6px; color: var(--muted); font-size: 0.85rem; white-space: pre-line;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+}
+.task-meta { color: var(--muted); font-size: 0.8rem; display: flex; flex-wrap: wrap; gap: 4px 10px; }
+.badges { display: flex; gap: 4px; flex-wrap: wrap; justify-content: flex-end; flex-shrink: 0; }
+.badge { font-size: 0.68rem; font-weight: 700; border-radius: 4px; padding: 3px 6px; color: #fff; text-transform: uppercase; white-space: nowrap; }
+.p-low { background: #0dcaf0; color: #053742; }
+.p-medium { background: #ffc107; color: #3d2e00; }
+.p-high { background: var(--danger); }
+.p-critical { background: #212529; }
+.s-pending { background: #6c757d; }
+.s-in_progress { background: #0d6efd; }
+.s-completed { background: #198754; }
+.task-actions { display: flex; justify-content: flex-end; gap: 6px; margin-top: 8px; }
+.sync-flag { font-size: 0.75rem; color: var(--teal-dark); }
+.sync-flag.pending { color: #b7791f; }
+
+/* Modals */
+.overlay {
+  position: fixed; inset: 0; background: rgba(20, 30, 40, 0.55);
+  display: flex; align-items: center; justify-content: center;
+  padding: 16px; z-index: 50;
+}
+.overlay[hidden] { display: none; }
+.modal {
+  background: #fff; border-radius: 10px; width: 100%; max-width: 560px;
+  max-height: calc(100vh - 32px); max-height: calc(100dvh - 32px);
+  display: flex; flex-direction: column; overflow: hidden;
+  box-shadow: 0 20px 50px rgba(0,0,0,0.25);
+}
+.modal-sm { max-width: 400px; }
+.modal-header { display: flex; justify-content: space-between; align-items: center; padding: 14px 18px; background: #f3f4f3; border-bottom: 1px solid var(--border); }
+.modal-header h2 { margin: 0; font-size: 1.1rem; }
+.modal-body { padding: 18px; overflow-y: auto; flex: 1; }
+.modal-footer { display: flex; align-items: center; gap: 8px; padding: 12px 18px; border-top: 1px solid var(--border); }
+.spacer { flex: 1; }
+
+.field { display: flex; flex-direction: column; gap: 6px; margin-bottom: 14px; }
+.field > span { font-weight: 600; font-size: 0.85rem; }
+.field em { font-weight: 400; color: var(--muted); font-style: normal; }
+.field.inline { margin: 0; }
+input[type="text"], input[type="time"], select, textarea {
+  font: inherit; font-size: 16px; /* prevents iOS zoom */
+  border: 1px solid var(--border); border-radius: 6px; padding: 9px 11px;
+  background: #fff; color: var(--text); width: 100%;
+}
+textarea { resize: vertical; min-height: 70px; }
+input:focus, select:focus, textarea:focus { outline: 2px solid rgba(26,188,156,0.35); border-color: var(--teal); }
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.check { display: flex; align-items: center; gap: 8px; margin-bottom: 14px; font-size: 0.9rem; }
+.check input { width: 18px; height: 18px; accent-color: var(--teal); }
+.form-error { color: var(--danger); margin: 0; font-size: 0.85rem; }
+
+.muted { color: var(--muted); }
+.small { font-size: 0.8rem; }
+.settings-section { border-bottom: 1px solid var(--border); padding-bottom: 14px; margin-bottom: 16px; }
+.settings-section:last-child { border-bottom: 0; margin-bottom: 0; }
+.settings-section h3 { margin: 0 0 6px; font-size: 1rem; }
+.row-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+.file-btn { position: relative; overflow: hidden; }
+.file-btn input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+
+.list-manager { list-style: none; padding: 0; margin: 0 0 14px; }
+.list-manager li { display: flex; align-items: center; gap: 8px; padding: 8px 0; border-bottom: 1px solid var(--border); }
+.list-manager li input { flex: 1; }
+.list-manager .list-count { font-size: 0.8rem; color: var(--muted); white-space: nowrap; }
+.add-list { display: flex; gap: 8px; }
+
+.toast {
+  position: fixed; left: 50%; bottom: calc(20px + env(safe-area-inset-bottom)); transform: translateX(-50%);
+  background: var(--navy); color: #fff; padding: 10px 16px; border-radius: 8px;
+  font-size: 0.9rem; z-index: 100; max-width: calc(100% - 32px); box-shadow: 0 6px 20px rgba(0,0,0,0.25);
+}
+.toast.error { background: var(--danger); }
+
+@media (max-width: 860px) {
+  .tabs {
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-bottom: 12px;
+  }
+  .tabs button {
+    font: inherit; font-weight: 600; border: 1px solid var(--border); background: #fff; color: var(--text);
+    border-radius: 6px; padding: 10px 6px; cursor: pointer;
+  }
+  .tabs button.active { background: var(--navy); color: #fff; border-color: var(--navy); }
+  .columns { grid-template-columns: 1fr; }
+  .column { display: none; }
+  .column.active { display: flex; }
+  .column-body { max-height: none; }
+  .toolbar select { min-width: 0; }
+  .toolbar .field.inline { flex: 1; }
+  .brand p { display: none; }
+  .topbar-actions { flex-direction: column-reverse; align-items: flex-end; gap: 4px; }
+}
+
+@media (max-width: 480px) {
+  .grid-2 { grid-template-columns: 1fr; gap: 0; }
+  .overlay { padding: 0; align-items: flex-end; }
+  .modal { max-height: 92vh; max-height: 92dvh; border-radius: 12px 12px 0 0; }
+  .modal-footer { padding-bottom: calc(12px + env(safe-area-inset-bottom)); }
+}
+
+/* Client ID help */
+.label-row { display: flex; align-items: center; gap: 8px; font-weight: 600; font-size: 0.85rem; }
+.info-btn {
+  width: 22px; height: 22px; border-radius: 50%; border: 0; padding: 0;
+  background: var(--teal); color: #fff; font: italic 700 0.8rem Georgia, serif; cursor: pointer; line-height: 22px;
+}
+.info-btn:hover, .info-btn[aria-expanded="true"] { background: var(--teal-dark); }
+.info-panel {
+  background: #e8f6f2; border-left: 4px solid var(--teal); border-radius: var(--radius);
+  padding: 10px 14px; font-size: 0.85rem; line-height: 1.5;
+}
+.info-panel-head { display: flex; justify-content: space-between; align-items: center; }
+.info-panel-head .icon-btn { font-size: 1.3rem; padding: 0 4px; }
+.info-panel p { margin: 6px 0; }
+.info-panel ol { margin: 6px 0; padding-left: 20px; }
+.info-panel li { margin-bottom: 8px; }
+.info-panel a { color: var(--teal-dark); font-weight: 600; }
+.info-panel code { background: #fff; border: 1px solid var(--border); border-radius: 4px; padding: 1px 5px; font-size: 0.8rem; word-break: break-all; }
+.copy-row { display: flex; align-items: center; gap: 8px; margin: 6px 0; }
+
+/* Paper planner: warm surfaces, pine ink, and quiet, useful colour. */
+body { min-height: 100dvh; line-height: 1.5; }
+body.modal-open { overflow: hidden; }
+button, input, select, textarea { -webkit-tap-highlight-color: transparent; }
+button { touch-action: manipulation; }
+button:focus-visible, a:focus-visible, .file-btn:focus-within { outline: 3px solid #9aaf82; outline-offset: 3px; }
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
+.topbar { background: #eeefe7; color: var(--text); border-bottom: 1px solid var(--border); padding: calc(20px + env(safe-area-inset-top)) max(32px, calc((100vw - 1184px) / 2)) 20px; }
+.brand { gap: 13px; }
+.brand-icon { width: 42px; height: 42px; border-radius: 12px; }
+.brand h1 { font-size: 18px; font-weight: 650; letter-spacing: -.5px; }
+.brand p { color: var(--muted); font-size: 12px; margin-top: 1px; }
+.topbar-actions { gap: 18px; flex-direction: row; align-items: center; }
+.sync-pill { color: var(--teal-dark); white-space: normal; max-width: 200px; }
+.sync-pill.warn { color: #8a642d; }
+.btn { border-radius: 8px; min-height: 44px; padding: 10px 17px; font-size: 14px; font-weight: 600; }
+.btn-sm { min-height: 44px; padding: 8px 12px; font-size: 13px; }
+.btn-primary { color: #fffefa; box-shadow: 0 2px 3px #294b4310; }
+.btn-primary > span { font-size: 23px; font-weight: 400; line-height: 1; margin-right: 3px; }
+.btn-dark, .btn-ghost { background: var(--card); color: var(--text); border-color: var(--border); }
+.btn-dark:hover:not(:disabled), .btn-ghost:hover { background: #e9ede3; }
+.btn-danger-outline { background: var(--card); border-color: #e2cbc5; color: var(--danger); }
+.btn-danger-outline:hover { background: #f7eae5; }
+.icon-btn { min-width: 44px; min-height: 44px; border-radius: 8px; }
+.icon-btn:hover { background: #e9ede3; }
+.container { max-width: 1248px; padding: 0 32px calc(24px + env(safe-area-inset-bottom)); }
+.page-heading { display: flex; align-items: center; justify-content: space-between; gap: 20px; padding: 38px 0 30px; }
+.eyebrow { font-size: 10px; font-weight: 700; letter-spacing: 1.8px; color: var(--muted); margin: 0 0 8px; }
+.page-heading h2 { font-size: clamp(26px, 3vw, 36px); font-weight: 550; letter-spacing: -1.3px; line-height: 1.2; margin: 0; }
+.heading-note { margin: 9px 0 0; font-size: 14px; color: var(--muted); }
+.page-heading > .btn { flex-shrink: 0; }
+.toolbar { display: flex; align-items: center; justify-content: space-between; padding-bottom: 21px; margin: 0; gap: 16px; }
+.view-switch { display: inline-flex; padding: 4px; background: #e9ebe2; border: 1px solid #e2e4da; border-radius: 10px; gap: 3px; }
+.view-switch button { border: 0; border-radius: 7px; font: inherit; font-size: 14px; font-weight: 600; color: var(--muted); background: transparent; min-height: 42px; padding: 8px 24px; cursor: pointer; }
+.view-switch button.active { background: var(--card); color: var(--text); box-shadow: 0 1px 4px #293d3612; }
+.list-controls { display: flex; gap: 10px; align-items: center; }
+.toolbar select { min-width: 170px; height: 44px; font-size: 14px; }
+.banner { margin: 20px 0 0; border-radius: 10px; background: #e5ecdf; border-left-color: var(--teal); }
+.calendar-panel { background: var(--card); border: 1px solid var(--border); border-radius: 14px; overflow: hidden; box-shadow: 0 3px 10px #293d3603; }
+.calendar-toolbar { padding: 24px 22px 8px; display: flex; align-items: center; justify-content: space-between; gap: 18px; flex-wrap: wrap; }
+.month-navigation { display: flex; align-items: center; gap: 7px; }
+.month-navigation h2 { font-size: 21px; letter-spacing: -.5px; font-weight: 650; margin: 0; min-width: 195px; text-align: center; }
+.month-navigation > .btn { margin-left: 12px; }
+.nav-arrow { min-width: 44px; height: 44px; background: transparent; border: 1px solid var(--border); border-radius: 8px; color: var(--text); font: inherit; font-size: 27px; line-height: 1; cursor: pointer; }
+.nav-arrow:hover { background: #e9ede3; }
+.legend { display: flex; gap: 15px; color: var(--muted); font-size: 11px; }
+.legend > span { display: inline-flex; gap: 6px; align-items: center; }
+.dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+.calendar-instruction { margin: 4px 24px 20px; color: var(--muted); font-size: 12px; }
+.weekdays, .calendar-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); }
+.weekdays { border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); background: #f5f6ef; }
+.weekdays span { text-align: center; padding: 11px 0; font-size: 11px; font-weight: 650; color: var(--muted); }
+.calendar-cell { position: relative; min-width: 0; min-height: 144px; border-right: 1px solid #e7e8df; border-bottom: 1px solid #e7e8df; padding: 4px 6px 8px; }
+.calendar-cell:nth-child(7n) { border-right: 0; }
+.calendar-cell.outside { background: #f8f8f2; }
+.calendar-cell.outside .day-number { color: #9ba39a; }
+.calendar-cell.outside .calendar-events { opacity: .55; }
+.calendar-cell.is-today { background: #edf3e7; }
+.calendar-cell.selected { box-shadow: inset 0 0 0 2px #8ba18a; }
+.day-select { display: flex; align-items: center; width: 100%; min-height: 39px; padding: 2px 0; background: transparent; border: 0; cursor: pointer; text-align: left; color: var(--text); font: inherit; font-size: 12px; }
+.day-number { display: inline-flex; align-items: center; justify-content: center; border-radius: 50%; width: 29px; height: 29px; font-weight: 550; }
+.is-today .day-number { background: var(--teal); color: #fffefa; }
+.day-select:hover .day-number { outline: 1px solid #8ba18a; }
+.calendar-events { display: flex; flex-direction: column; gap: 4px; }
+.event-chip { display: block; text-align: left; width: 100%; padding: 5px 6px; border-radius: 4px; border: 0; border-left: 2px solid currentColor; font: inherit; font-size: 11px; line-height: 1.3; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer; }
+.event-chip span { font-variant-numeric: tabular-nums; font-weight: 650; }
+.event-chip:hover { filter: brightness(.96); }
+.p-low { background: #e2eee7; color: #386653; }
+.p-medium { background: #f2ead5; color: #856522; }
+.p-high { background: #f5e3d8; color: #9c5834; }
+.p-critical { background: #f0dedf; color: #934954; }
+.dot.p-low { background: #5b8d73; }
+.dot.p-medium { background: #b4974a; }
+.dot.p-high { background: #bf805b; }
+.dot.p-critical { background: #ab6770; }
+.more-events { background: transparent; color: var(--muted); font: inherit; font-size: 11px; text-align: left; border: 0; min-height: 30px; cursor: pointer; padding: 3px 5px; }
+.more-events:hover { text-decoration: underline; color: var(--teal-dark); }
+.completed { opacity: .56; }
+.event-chip.completed, .agenda-item.completed strong { text-decoration: line-through; }
+.mobile-day-count, .mobile-dots { display: none; }
+.day-agenda { padding: 24px; }
+.agenda-heading { display: flex; justify-content: space-between; align-items: center; gap: 14px; }
+.agenda-heading .eyebrow { margin-bottom: 4px; }
+.agenda-heading h3 { margin: 0; font-size: 20px; font-weight: 600; letter-spacing: -.4px; }
+.agenda-note { color: var(--muted); font-size: 12px; margin: 12px 0 18px; }
+.agenda-item { display: flex; align-items: center; gap: 17px; background: transparent; color: var(--text); border: 0; border-top: 1px solid #e7e8df; text-align: left; width: 100%; padding: 16px 4px; font: inherit; cursor: pointer; }
+.agenda-item:hover { background: #f3f5ed; }
+.agenda-time { font-size: 13px; font-variant-numeric: tabular-nums; color: var(--muted); }
+.agenda-details { display: flex; flex-direction: column; flex: 1; min-width: 0; gap: 3px; }
+.agenda-details strong { font-size: 14px; font-weight: 600; overflow-wrap: anywhere; }
+.agenda-details > span { font-size: 12px; color: var(--muted); }
+.agenda-status { color: var(--muted); font-size: 11px; text-transform: capitalize; background: #edf0e7; border-radius: 5px; padding: 4px 8px; }
+.agenda-chevron { font-size: 23px; color: var(--muted); }
+.agenda-empty { display: flex; gap: 16px; align-items: center; padding: 22px; background: #f4f5ee; border-radius: 10px; }
+.empty-mark { display: flex; justify-content: center; align-items: center; width: 40px; height: 40px; border: 1px solid #d6ddce; border-radius: 50%; color: #6c8669; font-size: 23px; font-weight: 300; flex-shrink: 0; }
+.agenda-empty strong { font-size: 14px; font-weight: 600; }
+.agenda-empty p { margin: 4px 0 0; font-size: 13px; color: var(--muted); }
+.planner-footer { display: flex; justify-content: space-between; font-size: 11px; color: #7c857a; padding: 23px 2px 6px; }
+.planner-footer > span:first-child { font-weight: 600; }
+.tasks-intro { padding: 6px 0 23px; }
+.tasks-intro h2 { margin: 0 0 4px; font-size: 23px; font-weight: 600; letter-spacing: -.5px; }
+.tasks-intro p { margin: 0; font-size: 13px; color: var(--muted); }
+.columns { gap: 18px; align-items: start; }
+.column { background: #eeefe7; border-radius: 12px; min-height: 310px; border-color: #e1e3d8; }
+.column-header { padding: 16px 14px; border-bottom: 0; flex-wrap: wrap; gap: 12px; }
+.column-title { font-size: 15px; font-weight: 600; gap: 7px; }
+.count { background: #dde3d6; color: #5c6c55; font-size: 10px; min-width: 22px; text-align: center; }
+.column-header .btn { background: transparent; color: var(--teal-dark); box-shadow: none; border-color: #c8d2c1; }
+.column-body { padding: 0 12px 12px; max-height: none; }
+.task { background: var(--card); border: 1px solid var(--border); border-radius: 9px; padding: 16px; margin-bottom: 10px; }
+.task:hover { box-shadow: 0 3px 9px #294b430c; border-color: #aebea7; }
+.task:focus-visible { outline: 3px solid #9aaf82; outline-offset: 2px; }
+.task-top { flex-direction: column; gap: 12px; }
+.task-name { font-size: 15px; font-weight: 600; margin-bottom: 7px; line-height: 1.45; }
+.task-desc { font-size: 12px; line-height: 1.6; margin-bottom: 10px; }
+.task-meta { font-size: 11px; gap: 4px 10px; }
+.badges { justify-content: flex-start; gap: 5px; }
+.badge { font-size: 9px; padding: 3px 7px; letter-spacing: .4px; font-weight: 600; }
+.s-pending { background: #edf0e7; color: #65715f; }
+.s-in_progress { background: #e1e9eb; color: #4a6d77; }
+.s-completed { background: #e1eadd; color: #4e7143; }
+.task-actions { margin-top: 14px; border-top: 1px solid #eeefe8; padding-top: 8px; }
+.task-actions .btn { border: 0; background: transparent; min-height: 44px; padding: 6px 10px; }
+.task-actions .btn:hover { background: #eef1e8; }
+.sync-flag { font-size: 10px; }
+.empty { display: flex; align-items: center; flex-direction: column; padding: 24px 12px 30px; text-align: center; }
+.empty .empty-mark { margin-bottom: 18px; }
+.empty strong { color: var(--text); font-size: 14px; font-weight: 600; }
+.empty p { font-size: 12px; line-height: 1.7; max-width: 220px; margin: 8px 0 18px; }
+.empty .btn { font-size: 12px; }
+.overlay { background: #263d3666; backdrop-filter: blur(3px); z-index: 50; }
+#confirmOverlay { z-index: 60; }
+.modal { background: var(--card); border-radius: 16px; box-shadow: 0 20px 80px #253b3633; }
+.modal-header { padding: 17px 22px; background: #f1f3ea; }
+.modal-header h2 { font-size: 20px; font-weight: 600; letter-spacing: -.4px; }
+.modal-body { padding: 22px; overscroll-behavior: contain; }
+.modal-footer { padding: 15px 22px; background: #fafbf5; }
+.field { margin-bottom: 18px; gap: 7px; }
+.field > span { font-size: 12px; font-weight: 600; }
+input[type="text"], input[type="time"], select, textarea { background: var(--card); border-radius: 8px; border-color: #cfd5c9; min-height: 46px; padding: 10px 12px; }
+input:focus, select:focus, textarea:focus { outline: 2px solid #b6c8a9; border-color: var(--teal); }
+.check { min-height: 44px; font-size: 14px; }
+.check input { width: 21px; height: 21px; }
+.routine-notice { background: #edf1e6; color: #60715a; font-size: 12px; line-height: 1.6; border-radius: 8px; padding: 11px 13px; margin: 0 0 20px; }
+.settings-section { padding-bottom: 23px; margin-bottom: 24px; }
+.settings-section h3 { font-size: 16px; font-weight: 600; }
+.settings-section .small { font-size: 12px; line-height: 1.7; }
+.settings-section > .muted { font-size: 13px; }
+.label-row { font-size: 12px; }
+.info-btn { min-width: 44px; min-height: 44px; border-radius: 50%; color: var(--teal-dark); background: #e7eddf; font-size: 16px; }
+.info-btn:hover, .info-btn[aria-expanded="true"] { background: #d8e4ce; }
+.info-panel { background: #eef2e8; font-size: 13px; padding: 15px; }
+.info-panel code { background: var(--card); }
+.copy-row { flex-wrap: wrap; }
+.list-manager li { flex-wrap: wrap; padding: 12px 0; }
+.list-manager li input { min-width: 100px; width: 0; }
+.list-manager .list-count { font-size: 11px; }
+.toast { background: var(--navy); color: #fffefa; border-radius: 10px; padding: 14px 20px; font-size: 13px; box-shadow: 0 5px 25px #294b4322; }
+@media (prefers-reduced-motion: no-preference) {
+  .calendar-panel, #tasksView { animation: planner-in .28s ease-out; }
+  .modal { animation: planner-in .2s ease-out; }
+  @keyframes planner-in { from { opacity: 0; transform: translateY(7px); } to { opacity: 1; transform: translateY(0); } }
+}
+@media (max-width: 1000px) {
+  .calendar-toolbar { gap: 10px; }
+  .legend { gap: 12px; }
+  .calendar-cell { min-height: 135px; }
+  .columns { gap: 10px; }
+}
+@media (max-width: 767px) {
+  .topbar { padding: calc(16px + env(safe-area-inset-top)) 20px 16px; gap: 10px; }
+  .brand { gap: 10px; }
+  .brand-icon { width: 34px; height: 34px; }
+  .brand h1 { font-size: 16px; letter-spacing: -.4px; }
+  .brand p { display: none; }
+  .topbar-actions { flex-direction: column-reverse; align-items: flex-end; gap: 4px; }
+  .topbar-actions .btn { min-height: 44px; font-size: 12px; padding: 7px 11px; }
+  .sync-pill { max-width: 126px; font-size: 10px; text-align: right; }
+  .container { padding-left: 16px; padding-right: 16px; }
+  .page-heading { padding: 27px 2px 23px; align-items: flex-start; flex-wrap: wrap; gap: 18px; }
+  .page-heading h2 { font-size: 29px; letter-spacing: -1px; max-width: 300px; }
+  .page-heading .eyebrow { font-size: 9px; letter-spacing: 1.5px; }
+  .heading-note { font-size: 12px; margin-top: 8px; }
+  .page-heading > .btn { width: 100%; min-height: 47px; }
+  .toolbar { gap: 13px; padding-bottom: 16px; }
+  .view-switch { width: 100%; }
+  .view-switch button { flex: 1; }
+  .list-controls { width: 100%; justify-content: space-between; gap: 10px; }
+  .list-controls .field { flex: 1; }
+  .toolbar select { min-width: 0; width: 100%; font-size: 16px; }
+  .list-controls .btn { font-size: 12px; }
+  .calendar-toolbar { padding: 17px 12px 7px; gap: 14px; }
+  .month-navigation { width: 100%; gap: 4px; }
+  .month-navigation h2 { font-size: 18px; min-width: 0; flex: 1; }
+  .month-navigation > .btn { margin-left: 4px; padding: 8px 11px; font-size: 12px; }
+  .nav-arrow { min-width: 44px; }
+  .legend { justify-content: center; width: 100%; font-size: 10px; gap: 17px; }
+  .legend .dot { width: 6px; height: 6px; }
+  .calendar-instruction { font-size: 11px; text-align: center; margin: 8px 12px 16px; }
+  .weekdays span { padding: 10px 0; font-size: 11px; }
+  .calendar-cell { padding: 3px 0 9px; min-height: 77px; }
+  .day-select { flex-direction: column; min-height: 50px; padding: 0; justify-content: flex-start; }
+  .day-number { height: 29px; width: 29px; font-size: 14px; }
+  .mobile-day-count { display: block; font-size: 9px; color: var(--muted); line-height: 1.4; margin-top: 2px; }
+  .calendar-events { display: none; }
+  .mobile-dots { display: flex; gap: 3px; justify-content: center; min-height: 6px; margin-top: 4px; }
+  .mobile-dots .dot { width: 4px; height: 4px; }
+  .day-agenda { padding: 21px 14px 16px; }
+  .agenda-heading { align-items: flex-start; gap: 12px; flex-direction: column; }
+  .agenda-heading h3 { font-size: 19px; }
+  .agenda-heading .eyebrow { font-size: 9px; }
+  .agenda-heading .btn { width: 100%; font-size: 12px; }
+  .agenda-note { font-size: 11px; line-height: 1.6; margin: 12px 0; }
+  .agenda-item { gap: 10px; flex-wrap: wrap; padding: 15px 0; }
+  .agenda-time { font-size: 12px; }
+  .agenda-details { flex-basis: 65%; }
+  .agenda-details strong { font-size: 13px; }
+  .agenda-details > span { font-size: 10px; }
+  .agenda-status { margin-left: 57px; font-size: 9px; }
+  .agenda-chevron { margin-left: auto; }
+  .agenda-empty { padding: 17px 12px; align-items: flex-start; gap: 12px; }
+  .agenda-empty p { font-size: 12px; line-height: 1.6; }
+  .agenda-empty .empty-mark { width: 30px; height: 30px; }
+  .planner-footer { font-size: 10px; gap: 12px; flex-wrap: wrap; }
+  .tasks-intro { padding: 8px 2px 20px; }
+  .tasks-intro h2 { font-size: 22px; }
+  .tasks-intro p { font-size: 12px; }
+  .tabs { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; margin-bottom: 15px; }
+  .tabs button { padding-left: 2px; padding-right: 2px; }
+  .tabs button { min-height: 46px; background: var(--card); color: var(--muted); font-size: 13px; border-radius: 8px; }
+  .tabs button.active { background: #dfe8d7; color: var(--text); border-color: #bcccb0; }
+  .columns { grid-template-columns: 1fr; }
+  .column { display: none; }
+  .column.active { display: flex; }
+  .column-header { padding: 17px 15px; }
+  .column-body { padding: 0 14px 5px; }
+  .task-top { flex-direction: column; }
+  .task { padding: 17px; }
+  .overlay { padding: 12px; }
+  .modal-body { padding: 20px; }
+  .modal-header { padding: 13px 20px; }
+  .modal-footer { padding: 14px 16px calc(14px + env(safe-area-inset-bottom)); gap: 6px; }
+  .modal-footer .btn { padding: 9px 12px; font-size: 13px; }
+}
+@media (min-width: 768px) {
+  .columns { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .column { display: flex; }
+  .tabs { display: none; }
+}
+@media (max-width: 480px) {
+  .overlay { padding: 0; align-items: flex-end; }
+  .modal { border-radius: 18px 18px 0 0; max-height: 94dvh; }
+  .grid-2 { grid-template-columns: 1fr 1fr; gap: 12px; }
+}
+
+@media (min-width: 768px) and (max-width: 1150px) { .columns { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.column-header { flex-wrap: nowrap; } .column-header .btn { white-space: nowrap; flex-shrink: 0; }
+
+/* Date & time pickers (same design as the Pinebridge app picker) */
+.pp-trigger {
+  display: flex; align-items: center; justify-content: space-between; gap: 8px; width: 100%;
+  font: inherit; text-align: left; cursor: pointer; color: var(--text);
+  border: 1px solid var(--border); border-radius: 6px; padding: 9px 11px; background: #fff; min-height: 44px;
+}
+.pp-trigger:focus-visible { outline: 2px solid rgba(53,105,91,0.35); border-color: var(--teal); }
+.pp-trigger-text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pp-trigger.pp-empty .pp-trigger-text { color: var(--muted); }
+.pp-trigger-icon { color: var(--teal); display: inline-flex; flex-shrink: 0; }
+.pp-backdrop { position: fixed; inset: 0; z-index: 3999; }
+.pp-card {
+  position: fixed; visibility: hidden; z-index: 4000; background: #fff; color: var(--text);
+  border: 1px solid var(--border); border-radius: 10px; box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+  display: flex; flex-direction: column; overflow: hidden; max-height: calc(100vh - 16px); max-height: calc(100dvh - 16px);
+}
+.pp-card button { font: inherit; }
+.pp-head { display: flex; align-items: center; justify-content: space-between; background: var(--navy); color: #fff; padding: 10px 12px; flex-shrink: 0; }
+.pp-nav {
+  background: rgba(255,255,255,0.14); border: 0; color: #fff; border-radius: 6px; width: 38px; height: 38px;
+  display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0;
+}
+.pp-selects { display: flex; gap: 6px; flex: 1; min-width: 0; padding: 0 6px; }
+.pp-select {
+  background: rgba(255,255,255,0.14); border: 1px solid rgba(255,255,255,0.3); color: #fff; border-radius: 6px;
+  min-height: 38px; padding: 6px 8px; font-weight: 700; font-size: 14px; cursor: pointer; width: auto;
+}
+.pp-select option { color: var(--text); background: #fff; }
+.pp-month { flex: 1; min-width: 0; }
+.pp-year { width: 84px; flex-shrink: 0; }
+.pp-body { overflow-y: auto; min-height: 0; flex: 1; }
+.pp-grid { display: grid; grid-template-columns: repeat(7, 1fr); }
+.pp-dow { padding: 8px 10px 0; }
+.pp-dow div { text-align: center; font-size: 12px; color: var(--muted); font-weight: 600; padding: 4px 0; }
+.pp-days { gap: 2px; padding: 0 10px 10px; }
+.pp-day {
+  height: 40px; border: 1px solid transparent; border-radius: 6px; background: transparent;
+  color: var(--text); font-size: 15px; font-weight: 500; cursor: pointer;
+}
+.pp-day:hover { background: #eef2ec; }
+.pp-day.pp-today { border-color: var(--teal); }
+.pp-day.pp-selected { background: var(--teal); color: #fff; font-weight: 700; border-color: transparent; }
+.pp-footer {
+  display: flex; align-items: center; gap: 8px; padding: 10px 12px; flex-shrink: 0;
+  border-top: 1px solid var(--border); background: #fafbf8;
+}
+.pp-footer-left { display: flex; gap: 4px; margin-right: auto; }
+.pp-link { background: transparent; color: var(--teal); border: 0; padding: 8px 6px; cursor: pointer; font-weight: 600; }
+.pp-btn { border-radius: 6px; min-height: 40px; cursor: pointer; }
+.pp-btn-secondary { background: #fff; color: var(--text); border: 1px solid var(--border); padding: 9px 16px; }
+.pp-btn-primary { background: var(--teal); color: #fff; border: 0; padding: 9px 18px; font-weight: 600; }
+.pp-btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+.pp-time-display { background: var(--navy); color: #fff; padding: 14px 16px; text-align: center; font-size: 30px; font-weight: 700; letter-spacing: 2px; flex-shrink: 0; }
+.pp-time-cols { display: flex; gap: 10px; padding: 12px; overflow-y: auto; min-height: 0; flex: 1; }
+.pp-time-col { flex: 1; display: flex; flex-direction: column; }
+.pp-col-label { text-align: center; font-size: 12px; color: var(--muted); font-weight: 600; }
+.pp-step {
+  background: #f3f5f2; border: 1px solid var(--border); color: var(--text); height: 34px; margin: 6px 0;
+  display: flex; align-items: center; justify-content: center; cursor: pointer; border-radius: 6px;
+}
+.pp-list { height: 200px; overflow-y: auto; border: 1px solid var(--border); border-radius: 6px; }
+.pp-item { display: block; width: 100%; height: 40px; border: 0; background: transparent; color: var(--text); font-size: 16px; font-weight: 500; cursor: pointer; }
+.pp-item.pp-selected { background: var(--teal); color: #fff; font-weight: 700; }
+
+@media (min-width: 1151px) { .columns { grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 12px; } }
+
+/* Custom repeats and per-day changes */
+input[type="number"] {
+  font: inherit; font-size: 16px; width: 100%; color: var(--text); background: var(--card);
+  border: 1px solid #cfd5c9; border-radius: 8px; min-height: 46px; padding: 10px 12px;
+}
+.repeat-row { display: flex; gap: 8px; }
+.repeat-row input { width: 76px; flex-shrink: 0; }
+.repeat-row select { flex: 1; min-width: 0; }
+.custom-preview { background: #edf1e6; border-radius: 8px; padding: 11px 13px; margin: -4px 0 18px; font-size: 13px; color: #4f6249; }
+.custom-preview:empty { display: none; }
+.custom-preview strong { display: block; font-size: 12px; margin-bottom: 4px; color: var(--text); }
+.custom-preview ul { margin: 0; padding-left: 18px; }
+.custom-preview p { margin: 0; }
+.preview-problem { color: var(--danger); }
+.changed-days { border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; margin-bottom: 18px; }
+.changed-days-title { font-weight: 600; font-size: 12px; }
+.changed-days p { margin: 4px 0 8px; }
+.changed-days ul { list-style: none; margin: 0; padding: 0; }
+.changed-days li { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 8px 0; border-top: 1px solid #eeefe8; font-size: 13px; }
+.changed-days li > span { min-width: 0; overflow-wrap: anywhere; }
+.changed-flag { color: #8a642d; }
+.event-chip.changed { border-left-style: dashed; }
+.agenda-extra { font-size: 12px; color: #8a642d; }
+.occ-summary { display: flex; flex-direction: column; gap: 2px; margin-bottom: 14px; }
+.occ-summary strong { font-size: 17px; font-weight: 600; }
+.pp-links { display: inline-flex; gap: 4px; }
+@media (max-width: 767px) { .agenda-extra { font-size: 10px; } }
+
+  </style>
+  <script>
+/* Builds the install manifest at start-up, so the app can stay a single file.
+ * Browsers need absolute addresses inside a manifest that is not a separate file,
+ * so they are worked out from the page's own address. */
+(function () {
+  'use strict';
+  var ICON_192 = 'data:image/png;base64,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';
+  var ICON_512 = 'data:image/png;base64,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';
+  var ICON_APPLE = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAALQAAAC0CAIAAACyr5FlAAAACXBIWXMAAC4jAAAuIwF4pT92AAANmUlEQVR4nO2diVdU1x3H+TsYhvVdY02T2nRmNIgSdd4giAgYgqigiMaCVsAIVXGhURG3AxIVWcqJNlq11g1HWdxSrId6ND0e05zYtLGJiktErSyy6EzPm4eUZe7j3Zk3777ld8/3eFAPd+77/T7zu7+7/Gb8kJn1mazIbGVMVsb1M2NmuR9Mrj9BZjIj9Juuz5gmtt+wvjOmn+Q98r7nRw8QIB+/DTgju+zM+IASSeHg0AYgWGpvCZf9JXSBn0QRjwt01IwCMg9wB+cIaRDxFg7X3AHRglUeoHxGQgMOLht6M9uBkHKNwDvIKh8cfOZM+7FBrK9zQTI4uHwHsDCrlkvCSE8Ah4s+mEdY9Yo0foiHw5Vk0H48EPKeD5OkcLhWz+AYVhtoit+fFAEHJBlm7UlU7jgCHJBnIB1LEA7uaAfyDFarGnFLQgAOIIPVAx8C8wsGDi5noT90EJKBD2I4QGYdGQHHhxs4YNWqR5msI8PhumsESShtV1GAw83mx3A4gAydihkRDjiF169MgnDA6Ql9D5kVpIFwwKErfX8gJa1cBsABGxu0HYMUpj444BYPdU8gZehNacxAOCBs0PYKUp5gh5S+D5DC1B8pODhgS5S6P5DSZPp/5ICNL9rOMCtL/KaGn3oTjtmLc0/YG299c7up+Xrh1rIx4dHUh4TM7Jjw6MKtZU3N1299c/uEvXH24lzqQ/JYflzYUOHN4Z17axwOh3NAu/n1t+9Njqc7qvcmx9/8+tuBo3I4HDv31lA3lwdi+uCgPQ5SpWXlO921E/ZGugM7YW90O7C0rHzqRiMVY1InHA2Xrrj1watXr0xTE2mNyjQ18dWrV24H1nDpCnWjeRI51LhUufPDXbc+cDqdyRnZtEaVnJGNG9WdH+5SNxqxTFZV7nPcf/AI54bUzDxao0rNzMON6v6DR9SNRiyVTisAB/K9kdWacwAcSCY4VLjJAXAgGeAwczkHRA5prJmqrZyD3+dgVSeIHEgWOysFjrGRcYtyCtYWlZRVHjh47PTh43YBdXR04t6jl5qahX/Xd7rU1IwbVUdHp/DvHjx2uqzywNqikkU5Bb/8YCZ1dygCjtHjovI2bP3y6rXu7h6cZfXWurt7vrx6beX64tHjovQLx+Kctf/8939o+0K57fa/7izKKdAdHKPHRVXsP0zb+Opoh4/bf/Z+tF7geHdibFPzddo2V1Nrar7+7sRY7cMxymI7U3+JtrXV1+ovNo2y2DQOR1nlAdp2Vmsr3fe5luFgZ6X39vbSNrJaW29vL5u4QLNw1F34C20Lq7vZGy9rEw42ccGQi33D2937D06ePT/idpP2NsEOH7efOnfhXstDYfs4HI6pCfM1CMe2siqBx37R1p5bUCQy59Lq9vkoi23F2i0v2toFDLWltEKDcNy4+Q/cA7/s6kpIWyq+K63CgVxKnL/sZVcXrqvrf7+lQTg6X2IfeM/vDxJ1pW04kJktrzmE66qz86XW4PjVlATc0zqdTmsi2Tz6470WXFcp9OpEUhbn4kb1470Woq7YxAUC5pKtAkMmOKYlZeAetaenl3R750rzDbddORyOiJgU2WhAgxURk4LLuK803yDqapTF1tODXfNPS8rQFBzxqZm4R21r7yDtbeX6YrddXb32lTyPgzC6eu0rtwNbub6YtKu29g6cxeJTM+V5HFXC8dY4m73h8pB+Hv/UOiU+TZ7HQRhNiU97/FPrkIHZGy6/NY545xvg8BAOno/CrWW3v/v+9WvHk6fPjp48Gx6dTJcM5FJ4dPLRk2efPH32+rXj9nffF24t84AMgMPzyKEHtcG0AnAggEPanEMPaoPIAXAggAMiB4LIgTMBwIEADoADQc4hYeTofNmVmpkHSh1sBIFzSh3tkEIjbQAHNGwDOKBhG8ABDdsADmjYBnBAwzaAAxq2ARzQsE1HcDgcjpaHj0Etg40gUACmIzjgyB65sxgc2QMcLO7tBHAAHCzAAdMKSzoRQ+SAyMECHBA5WIgcsFphpVrfwbQC0woLcOhpWrHYQpZlBuzf7l9faWioCjiwPTg7i4FySAGT6QQOJiImoLLI/3z1EBmri9Gk6URdwbSiKTiYCdHG6uLhZPAK3FUIcOg1crw/zVixGUcGr9AEglJviBxagWN8lHHPp8Jk+J+vDlqzAuDQV+RgxtmMJYUjksHNLMUEX4EAkUP9cFjYwG1rxZDBRY71KwEO3UQOiy2oaI1IMricYy7BBw9B5FA3HEGFeeLJMH6+DZF8Lh7AoWI4ggpWiCfDcHI3My2BqH+AQ61wBOcuE0+Gf+3esJkfkb4EwKFKOIKXLyWIGfZyou0NgEPFCWlI5sf+jVVi4ThXEfrRHM9eCCKHyuAI+XiRf6Po2aS+kmh5AnCoeCkbsiDd0CA6ZtRXhqZ59cUoEDlUA0fonFT/ukqxZDRWhWQs9PIVAQ6v4GCmxAWtzjVWbzEcKTWWbwrOzkLhPvn+1dDZc/3rKkSTUR2yZLH3LwpweA5HyLw0/9q9Q5cGR0rCYhIlJuPDFMPZfeJjRvDSJZK8LsDhIRxhcUm4t7Lh1B4PNhWwZMQn+58pF79wDc5dJtVLAxwewmEsF7w5UVseNmu29+4Jm5FkOL1HPBlB+dlSkQFweLhaYSJjR1xPGuz7PN5g6CMjJtFwcjdBzCgguKsBcPjqVJYL9WIcdq4idM48D8mwxRv+/BlBzCiU/ovlYFrxBI6wmFli3VZXEZpKvA3FWOMCjpYSkFG0hui4FeDw5X0Oi81wSnQqUF8ZujCdgIzJMwL+WCKejMDt65BFYiwgcni1Qxq8Kke8/7gtKXEbD0xkbMAXOwjIKN3gQUEKwOHLyMFf6MUXAbjjo3rk7YeJMcb928T3adzzKRof5SMyIOfw6myFKxIZqRRgaPzIxX/pdfg0Y9UWAjIqiny0GwtwSHTwFj7NWL6JgI/z1cGrctzHob0bxXcSUFPMRPiWDIgcUpzKjo8K3CWqLKBfQes+GUrGbhIy/rADTYrxNRkAh0RH9hab+OKAPj42rupbfFpsgTvXE5DxxQ4mMlYGMgAO6e5zWGyBxQVEfARuXu36LYLCAsOREmbKDHnIADgkvexjYQM3rybiI+AwwX5GwJ92MdY42cgAOCSFgy8xIikkIYgZx8vCosgKCwAOJVa8Ba9cLjEZp/aExcySmQyIHD6BQ2I+aj0pOQE4FF0rG5K7lKCAAKcz5aHxnpScAByKhoOLH0uXEJQRSFpygqQQHNn7EA4ufixaRFBMIF3JCQI4VPERDKELM/zrK4nJ8K7kBAEcqoCD42P+AvElJ4aGqpB0b0tOEMChFji4y2PJcw12EeUFjVUhmdIUFiCvBTmHTHBw8SMpxWAXLDJorApZJtM3ICGAQ2kf+xQan2wYVgfVr+BPfkMdCDRAEDlkhYOvhjIcLxseM7hSSto0IICDYuTo06TpQatzubuiteWGY2WB29eFxSVRRwEBHHSnFXWprb0DNxHDt0PSdw8COOQxwcx52IS0vaOTuicUqPaOTpzFZs7T1vfKfhA3D/eoDodjjI9vcqtOb0+IEfjS4cg4D8s8FQqH8NOm/prgc5/1oLSsfCW8l2SCA5nZJ0+f4R64qfn6KB+Um6pUoyy2v/7tBs5Wj5+0yjYS+eCorbuIe2Cn01lecwj4QC4yymsOCRjqdN0FDcKRvWaTwDM7nc4rzTfSsvJ1m3+8PSEmLStfIGbwbfmqjRqEY2xk3PMXbU4R7fmLNh3KKcYy/33xi8g4DcKBzOy2sioxJoCGa1tKK+T0l6xwvBMRe//BI+yjQxNs91oe/nzCdM3CgcxsQmrWy64uYStAG966urs/TJf73FhuOJCZzduw1c3TQxNsK9cXy+8pP2S2yv+qOQWbIX6IbN3dPb/93Xb5fcRwcJjkflVeSenL77U8FGshvbZ7LQ/ln03ewGGlEzl4jQmPXltU0vr0OW0XKLE9f9G2/bPqdyJk+sQHN3CYuMhBDQ5eYyPjsldvqq27+PhJK22P0G+Pn7SerruwfNVGOfcz3MNBK+fAaUx4dOSMuQmpWTpU5Iy5itod5qYVhlLOAUKKN4IfQ3taASFFGsEVOWgPAoQUaQTGxK9WIHjQ9gRSnviElFu0UB8KCCnPCPz2OaQd9D2BlCQ+E3VFDoCDtjOQ0mSidPAGQso2Qv8apQ8OSDuouwQpSNbBcAAf9F3CKkEcCW9+HjCtwIKWtmOQwjQw57DCsgXpXdaBCcaghBR2S/Uu06C/DlutwOSiVzGmod4fCgcED+pOQoqRGziADz3K1LcrKgQHbJjqFg407B/d75DCnhjSk3B3evzwQYb+oEFIDjKw/4U/WzFZ4UAOaR1Q4RRT+OANtsVYrZMhdFtjpFNZLubAbQ9WoxrBs37i5iTgg9UYFmJyBlH3ORhxfYGQGozAuVLcPjjBZR8oYkCaIEP8+5zoJpgVNk+RyskgyhD8iLmD/Q+zakXoO4/ukJqstD64AYQ8TDI8+UUPLxgzJiuXgsD5vlnhvHIZhsfJope3z/lXhYUMSxsCt67x9t3rJ1WaA7kqog8E745+OLztStK6FRPUR7E0yTBJvCPl57NrIzDXsLJh4cr/pO/WhxVvfC0M82bofYts17/IZjXNiHlzzsUvPbgFgSvT9Kkx/wdtqSm1cx5SFgAAAABJRU5ErkJggg==';
+  window.PO_ICON_PNG = ICON_192;
+  document.getElementById('appleIcon').href = ICON_APPLE;
+  if (!/^https?:$/.test(location.protocol)) return; // opened as a file: nothing to install
+  var page = location.href.split('#')[0].split('?')[0];
+  var scope = page.slice(0, page.lastIndexOf('/') + 1);
+  var manifest = {
+    id: page,
+    name: 'Personal Organiser',
+    short_name: 'Organiser',
+    description: 'Daily, weekly, monthly and one-off tasks with a built-in calendar. Everything stays on this device.',
+    start_url: page,
+    scope: scope,
+    display: 'standalone',
+    background_color: '#f5f4ef',
+    theme_color: '#294b43',
+    icons: [
+      { src: ICON_192, sizes: '192x192', type: 'image/png' },
+      { src: ICON_512, sizes: '512x512', type: 'image/png' },
+      { src: ICON_512, sizes: '512x512', type: 'image/png', purpose: 'maskable' }
+    ]
+  };
+  document.getElementById('appManifest').href = 'data:application/manifest+json;charset=utf-8,' + encodeURIComponent(JSON.stringify(manifest));
+})();
+
+  </script>
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E %3Crect width='512' height='512' rx='112' fill='%23253545'/%3E %3Crect x='112' y='128' width='288' height='272' rx='28' fill='none' stroke='%23ffffff' stroke-width='26'/%3E %3Cline x1='112' y1='200' x2='400' y2='200' stroke='%23ffffff' stroke-width='26'/%3E %3Cline x1='184' y1='96' x2='184' y2='152' stroke='%23ffffff' stroke-width='26' stroke-linecap='round'/%3E %3Cline x1='328' y1='96' x2='328' y2='152' stroke='%23ffffff' stroke-width='26' stroke-linecap='round'/%3E %3Cpolyline points='186,298 238,348 330,252' fill='none' stroke='%231abc9c' stroke-width='32' stroke-linecap='round' stroke-linejoin='round'/%3E %3C/svg%3E" alt="" class="brand-icon" />
+      <div>
+        <h1>Personal Organiser</h1>
+        <p>A little structure. More room for life.</p>
+      </div>
+    </div>
+    <div class="topbar-actions">
+      <button type="button" class="btn btn-ghost" id="installBtn" hidden>Install app</button>
+      <button type="button" class="btn btn-ghost" id="settingsBtn" aria-label="Settings">Settings</button>
+    </div>
+  </header>
+
+  <main class="container">
+
+    <section class="page-heading">
+      <div><p class="eyebrow">YOUR PERSONAL PLANNER</p><h2>Make time for what matters.</h2><p class="heading-note">Your routines, in one reassuring place.</p></div>
+      <button type="button" class="btn btn-primary" id="newTaskBtn"><span aria-hidden="true">+</span> New task</button>
+    </section>
+    <section class="toolbar" aria-label="Planner controls">
+      <nav class="view-switch" aria-label="Planner view">
+        <button type="button" data-view="calendar" aria-pressed="true">Calendar</button>
+        <button type="button" data-view="tasks" aria-pressed="false">Tasks</button>
+      </nav>
+      <div class="list-controls">
+      <label class="field inline">
+        <span class="sr-only">Filter by list</span>
+        <select id="listFilter"></select>
+      </label>
+      <button type="button" class="btn btn-dark btn-sm" id="manageListsBtn">Manage lists</button></div>
+    </section>
+
+    <section id="calendarView" class="calendar-panel" aria-label="Monthly calendar">
+      <div class="calendar-toolbar">
+        <div class="month-navigation">
+          <button type="button" class="nav-arrow" id="prevMonthBtn" aria-label="Previous month">&#8249;</button>
+          <h2 id="monthTitle" aria-live="polite"></h2>
+          <button type="button" class="nav-arrow" id="nextMonthBtn" aria-label="Next month">&#8250;</button>
+          <button type="button" class="btn btn-dark" id="todayBtn">Today</button>
+        </div>
+        <div class="legend" aria-label="Task priority colours"><span><i class="dot p-low"></i>Low</span><span><i class="dot p-medium"></i>Medium</span><span><i class="dot p-high"></i>High</span><span><i class="dot p-critical"></i>Critical</span></div>
+      </div>
+      <p class="calendar-instruction">Select a day to see its tasks. Select a task to make changes.</p>
+      <div class="weekdays" aria-hidden="true"><span>Sun</span><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span></div>
+      <div id="calendarGrid" class="calendar-grid"></div>
+      <section class="day-agenda" aria-labelledby="agendaTitle">
+        <div class="agenda-heading"><div><p class="eyebrow">DAY AT A GLANCE</p><h3 id="agendaTitle"></h3></div><button type="button" class="btn btn-dark" id="addDayTaskBtn">+ Add for this day</button></div>
+        <p class="agenda-note">Select a repeating task to change or remove just that day, or choose Edit all days to change the whole schedule.</p>
+        <div id="agendaTasks"></div>
+      </section>
+    </section>
+
+    <section id="tasksView" hidden aria-label="Tasks by routine">
+    <div class="tasks-intro"><h2>Your tasks</h2><p>Routines and one-off jobs, kept on track. Select a task to edit its details.</p></div>
+    <nav class="tabs" id="mobileTabs" role="tablist">
+      <button type="button" data-tab="daily" role="tab" class="active">Daily</button>
+      <button type="button" data-tab="weekly" role="tab">Weekly</button>
+      <button type="button" data-tab="monthly" role="tab">Monthly</button>
+      <button type="button" data-tab="once" role="tab">One-off</button>
+      <button type="button" data-tab="custom" role="tab">Custom</button>
+    </nav>
+
+    <section class="columns" id="columns"></section>
+    </section>
+    <footer class="planner-footer"><span>Personal Organiser</span><span>A steady rhythm for everyday life.</span></footer>
+  </main>
+
+  <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+
+  <!-- Task modal -->
+  <div class="overlay" id="taskOverlay" role="dialog" aria-modal="true" aria-labelledby="taskModalTitle" hidden>
+    <form class="modal" id="taskForm" novalidate>
+      <div class="modal-header">
+        <h2 id="taskModalTitle">Add Task</h2>
+        <button type="button" class="icon-btn" data-close="taskOverlay" aria-label="Close">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p class="routine-notice" id="routineNotice">This is a repeating task. Changes here apply to every day. To change or remove a single day, select that day on the calendar.</p>
+        <label class="field">
+          <span>Task Name *</span>
+          <input type="text" id="fTaskName" maxlength="255" required />
+        </label>
+        <label class="field">
+          <span>Description <em>(optional)</em></span>
+          <textarea id="fDescription" rows="3" placeholder="Add any details or instructions for this task..."></textarea>
+        </label>
+        <label class="field">
+          <span>List</span>
+          <select id="fList"></select>
+        </label>
+        <div class="grid-2">
+          <label class="field">
+            <span>Priority</span>
+            <select id="fPriority">
+              <option value="low">Low</option>
+              <option value="medium">Medium</option>
+              <option value="high">High</option>
+              <option value="critical">Critical</option>
+            </select>
+          </label>
+          <label class="field">
+            <span>Status</span>
+            <select id="fStatus">
+              <option value="pending">Pending</option>
+              <option value="in_progress">In Progress</option>
+              <option value="completed">Completed</option>
+            </select>
+          </label>
+        </div>
+        <label class="field">
+          <span>Schedule Type</span>
+          <select id="fScheduleType">
+            <option value="daily">Daily</option>
+            <option value="weekly">Weekly</option>
+            <option value="monthly">Monthly</option>
+            <option value="once">One-off (does not repeat)</option>
+            <option value="custom">Custom repeat (several days, every few weeks...)</option>
+          </select>
+        </label>
+        <label class="field" id="dateWrap" hidden>
+          <span id="dateLabel">Date</span>
+          <input type="date" id="fDate" />
+        </label>
+        <label class="field">
+          <span>Time</span>
+          <input type="time" id="fTime" required />
+        </label>
+        <div id="customWrap" hidden>
+          <div class="grid-2">
+            <label class="field">
+              <span>Days in a row</span>
+              <input type="number" id="fSpanDays" min="1" max="31" step="1" inputmode="numeric" />
+            </label>
+            <div class="field">
+              <span id="repeatEveryLabel">Repeat every</span>
+              <div class="repeat-row" role="group" aria-labelledby="repeatEveryLabel">
+                <input type="number" id="fRepeatEvery" min="1" max="99" step="1" inputmode="numeric" aria-label="Repeat every (number)" />
+                <select id="fRepeatUnit" aria-label="Repeat every (unit)">
+                  <option value="days">days</option>
+                  <option value="weeks">weeks</option>
+                  <option value="months">months</option>
+                </select>
+              </div>
+            </div>
+          </div>
+          <label class="field">
+            <span>Repeat until <em>(optional)</em></span>
+            <input type="date" id="fEndDate" data-optional="true" data-placeholder="No end date" />
+          </label>
+          <div class="custom-preview" id="customPreview" aria-live="polite"></div>
+        </div>
+        <div class="changed-days" id="changedDaysWrap" hidden>
+          <span class="changed-days-title">Changed days</span>
+          <p class="muted small">These days differ from the normal schedule. Restore a day to put it back to normal.</p>
+          <ul id="changedDaysList"></ul>
+        </div>
+        <label class="check" id="weekdaysWrap">
+          <input type="checkbox" id="fWeekdays" />
+          <span>Weekdays only (Mon-Fri)</span>
+        </label>
+        <label class="field" id="dowWrap">
+          <span>Day of Week</span>
+          <select id="fDayOfWeek"></select>
+        </label>
+        <label class="field" id="domWrap">
+          <span>Day of Month</span>
+          <select id="fDayOfMonth"></select>
+        </label>
+        <p class="form-error" id="taskFormError" hidden></p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-danger-outline" id="deleteTaskBtn" hidden>Delete</button>
+        <span class="spacer"></span>
+        <button type="button" class="btn btn-dark" data-close="taskOverlay">Cancel</button>
+        <button type="submit" class="btn btn-primary" id="saveTaskBtn">Create</button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Single day of a repeating task -->
+  <div class="overlay" id="occOverlay" role="dialog" aria-modal="true" aria-labelledby="occTitle" hidden>
+    <form class="modal modal-sm" id="occForm" novalidate>
+      <div class="modal-header">
+        <h2 id="occTitle">Change this day</h2>
+        <button type="button" class="icon-btn" data-close="occOverlay" aria-label="Close">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="occ-summary">
+          <strong id="occTaskName"></strong>
+          <span id="occDate"></span>
+          <span class="muted small" id="occSeries"></span>
+        </div>
+        <p class="routine-notice">Changes here apply to this day only. The rest of the schedule stays the same.</p>
+        <label class="field">
+          <span>Time</span>
+          <input type="time" id="fOccTime" required />
+        </label>
+        <label class="field">
+          <span>Status for this day</span>
+          <select id="fOccStatus">
+            <option value="pending">Pending</option>
+            <option value="in_progress">In Progress</option>
+            <option value="completed">Completed</option>
+          </select>
+        </label>
+        <label class="field">
+          <span>Note for this day <em>(optional)</em></span>
+          <textarea id="fOccNote" rows="2" placeholder="For example: finishes early today"></textarea>
+        </label>
+        <div class="row-actions">
+          <button type="button" class="btn btn-danger-outline btn-sm" id="occRemoveBtn">Remove this day</button>
+          <button type="button" class="btn btn-dark btn-sm" id="occResetBtn" hidden>Back to normal</button>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-dark" id="occSeriesBtn">Edit all days</button>
+        <span class="spacer"></span>
+        <button type="button" class="btn btn-dark" data-close="occOverlay">Cancel</button>
+        <button type="submit" class="btn btn-primary">Save</button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Lists modal -->
+  <div class="overlay" id="listsOverlay" role="dialog" aria-modal="true" aria-labelledby="listsTitle" hidden>
+    <div class="modal">
+      <div class="modal-header">
+        <h2 id="listsTitle">Manage lists</h2>
+        <button type="button" class="icon-btn" data-close="listsOverlay" aria-label="Close">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p class="muted">Lists group your tasks, for example Home, Work, Health or Finance.</p>
+        <ul class="list-manager" id="listManager"></ul>
+        <form class="add-list" id="addListForm">
+          <input type="text" id="newListName" placeholder="New list name" maxlength="80" />
+          <button type="submit" class="btn btn-primary btn-sm">Add list</button>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <span class="spacer"></span>
+        <button type="button" class="btn btn-dark" data-close="listsOverlay">Done</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Settings modal -->
+  <div class="overlay" id="settingsOverlay" role="dialog" aria-modal="true" aria-labelledby="settingsTitle" hidden>
+    <div class="modal">
+      <div class="modal-header">
+        <h2 id="settingsTitle">Settings</h2>
+        <button type="button" class="icon-btn" data-close="settingsOverlay" aria-label="Close">&times;</button>
+      </div>
+      <div class="modal-body">
+        <section class="settings-section">
+          <h3>Reminders</h3>
+          <p class="muted" id="notifStatus"></p>
+          <div class="row-actions">
+            <button type="button" class="btn btn-primary btn-sm" id="enableNotifBtn">Allow pop-up reminders</button>
+            <button type="button" class="btn btn-dark btn-sm" id="testNotifBtn">Send test reminder</button>
+          </div>
+          <label class="field">
+            <span>Remind me</span>
+            <select id="sReminderMinutes">
+              <option value="0">At the task time</option>
+              <option value="5">5 minutes before</option>
+              <option value="10">10 minutes before</option>
+              <option value="15">15 minutes before</option>
+              <option value="30">30 minutes before</option>
+              <option value="60">1 hour before</option>
+            </select>
+          </label>
+          <p class="muted small">Reminders pop up while this app is open (it can be in the background).</p>
+        </section>
+
+        <section class="settings-section">
+          <h3>Your data</h3>
+          <p class="muted small">Everything is saved only on this device, in this browser. Nothing is sent anywhere and nothing is shared between devices.</p>
+          <p class="muted small" id="storageStatus"></p>
+        </section>
+
+        <section class="settings-section">
+          <h3>Install on this device</h3>
+          <p class="muted small" id="installHelp"></p>
+          <div class="row-actions">
+            <button type="button" class="btn btn-primary btn-sm" id="installSettingsBtn" hidden>Install app</button>
+          </div>
+        </section>
+
+        <section class="settings-section">
+          <h3>Backup</h3>
+          <p class="muted small">Export a copy of your lists and tasks for safekeeping, or to move them to another device. Importing a backup replaces your current lists and tasks.</p>
+          <div class="row-actions">
+            <button type="button" class="btn btn-dark btn-sm" id="exportBtn">Export backup</button>
+            <label class="btn btn-dark btn-sm file-btn">
+              Import backup
+              <input type="file" id="importInput" accept="application/json,.json" />
+            </label>
+          </div>
+        </section>
+      </div>
+      <div class="modal-footer">
+        <span class="spacer"></span>
+        <button type="button" class="btn btn-dark" data-close="settingsOverlay">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Confirm modal -->
+  <div class="overlay" id="confirmOverlay" role="alertdialog" aria-modal="true" aria-labelledby="confirmTitle" aria-describedby="confirmText" hidden>
+    <div class="modal modal-sm">
+      <div class="modal-header"><h2 id="confirmTitle">Are you sure?</h2></div>
+      <div class="modal-body"><p id="confirmText"></p></div>
+      <div class="modal-footer">
+        <span class="spacer"></span>
+        <button type="button" class="btn btn-dark" id="confirmCancel">Cancel</button>
+        <button type="button" class="btn btn-danger" id="confirmOk">Delete</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+/* Touch- and pen-friendly date and time pickers (same design as the Pinebridge app's picker).
+ *
+ * Native <input type="date|time"> opens the device's own picker, which looks different on
+ * every phone and computer. PenPicker.enhance(input) turns an <input> into a button that
+ * opens an in-page picker with large tap targets and an always-visible Set button.
+ *
+ * The original <input> keeps its id and value ("YYYY-MM-DD" or "HH:MM"), so code can keep
+ * reading and writing input.value; writing it updates the button text automatically.
+ */
+(function () {
+  'use strict';
+
+  var MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+  var MONTHS_SHORT = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  var WEEKDAYS = ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'];
+  var ITEM_H = 40;
+  var LIST_H = 200;
+  var ICONS = {
+    calendar: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>',
+    clock: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>',
+    left: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>',
+    right: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18l6-6-6-6"/></svg>',
+    up: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 15l-6-6-6 6"/></svg>',
+    down: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>'
+  };
+  var valueDesc = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value');
+  var current = null; // the open picker, if any
+
+  function pad2(n) { return (n < 10 ? '0' : '') + n; }
+  function fmtDate(y, m, d) { return y + '-' + pad2(m) + '-' + pad2(d); }
+  function parseDate(v) {
+    var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(v || '');
+    if (!m) return null;
+    var p = { y: +m[1], m: +m[2], d: +m[3] };
+    var dt = new Date(p.y, p.m - 1, p.d);
+    if (dt.getFullYear() !== p.y || dt.getMonth() !== p.m - 1 || dt.getDate() !== p.d) return null;
+    return p;
+  }
+  function parseTime(v) {
+    var m = /^(\d{1,2}):(\d{1,2})/.exec(v || '');
+    if (m) return { h: Math.min(23, +m[1]), m: Math.min(59, +m[2]) };
+    var now = new Date();
+    return { h: now.getHours(), m: now.getMinutes() };
+  }
+  function displayDate(v) {
+    var p = parseDate(v);
+    return p ? pad2(p.d) + ' ' + MONTHS_SHORT[p.m - 1] + ' ' + p.y : '';
+  }
+  function el(tag, cls, html) {
+    var e = document.createElement(tag);
+    if (cls) e.className = cls;
+    if (html != null) e.innerHTML = html;
+    return e;
+  }
+  function button(cls, html, label) {
+    var b = el('button', cls, html);
+    b.type = 'button';
+    if (label) b.setAttribute('aria-label', label);
+    return b;
+  }
+
+  // ---------- Popover shell ----------
+  function openPopover(input, trigger, width, label, build) {
+    close();
+    var host = trigger.closest('.overlay') || document.body;
+    var backdrop = el('div', 'pp-backdrop');
+    var card = el('div', 'pp-card');
+    card.setAttribute('role', 'dialog');
+    card.setAttribute('aria-modal', 'true');
+    card.setAttribute('aria-label', label);
+    host.appendChild(backdrop);
+    host.appendChild(card);
+
+    function place() {
+      var a = trigger.getBoundingClientRect();
+      var vw = window.innerWidth, vh = window.innerHeight;
+      var cw = Math.min(width, vw - 16);
+      card.style.width = cw + 'px';
+      var ch = card.offsetHeight || 340;
+      var left = Math.max(8, Math.min(a.left, vw - 8 - cw));
+      var top = a.bottom + 6;
+      if (top + ch > vh - 8) {
+        var above = a.top - 6 - ch;
+        top = above >= 8 ? above : Math.max(8, vh - 8 - ch);
+      }
+      card.style.left = left + 'px';
+      card.style.top = top + 'px';
+      card.style.visibility = 'visible';
+    }
+    function onKey(e) {
+      if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); close(); return; }
+      if (e.key !== 'Tab') return;
+      e.stopPropagation(); // keep the surrounding dialog's focus trap out of it
+      var f = Array.prototype.filter.call(card.querySelectorAll('button:not([disabled]), select:not([disabled])'), function (x) { return x.getClientRects().length; });
+      if (!f.length) return;
+      if (e.shiftKey && document.activeElement === f[0]) { e.preventDefault(); f[f.length - 1].focus(); }
+      else if (!e.shiftKey && document.activeElement === f[f.length - 1]) { e.preventDefault(); f[0].focus(); }
+    }
+    function onScroll(e) { if (!card.contains(e.target)) place(); }
+
+    current = {
+      close: function () {
+        backdrop.remove();
+        card.remove();
+        window.removeEventListener('resize', place);
+        window.removeEventListener('scroll', onScroll, true);
+        current = null;
+        trigger.focus({ preventScroll: true });
+      }
+    };
+    backdrop.addEventListener('click', close);
+    card.addEventListener('keydown', onKey);
+    window.addEventListener('resize', place);
+    window.addEventListener('scroll', onScroll, true);
+
+    build(card);
+    place();
+    var first = card.querySelector('.pp-selected') || card.querySelector('button:not([disabled])');
+    if (first) first.focus({ preventScroll: true });
+  }
+
+  function close() { if (current) current.close(); }
+
+  function footer(card, onSet, extra) {
+    var f = el('div', 'pp-footer');
+    var left = el('div', 'pp-footer-left');
+    if (extra) left.appendChild(extra);
+    f.appendChild(left);
+    var cancel = button('pp-btn pp-btn-secondary', 'Cancel');
+    var set = button('pp-btn pp-btn-primary', 'Set');
+    cancel.addEventListener('click', close);
+    set.addEventListener('click', onSet);
+    f.appendChild(cancel);
+    f.appendChild(set);
+    card.appendChild(f);
+    return set;
+  }
+
+  // ---------- Date panel ----------
+  function datePanel(card, value, commit, optional) {
+    var now = new Date();
+    var sel = parseDate(value);
+    var init = sel || { y: now.getFullYear(), m: now.getMonth() + 1, d: now.getDate() };
+    var viewY = init.y, viewM = init.m;
+    var todayStr = fmtDate(now.getFullYear(), now.getMonth() + 1, now.getDate());
+
+    var head = el('div', 'pp-head');
+    var prev = button('pp-nav', ICONS.left, 'Previous month');
+    var next = button('pp-nav', ICONS.right, 'Next month');
+    var selects = el('div', 'pp-selects');
+    var monthSel = el('select', 'pp-select pp-month');
+    monthSel.setAttribute('aria-label', 'Select month');
+    MONTHS.forEach(function (m, i) { var o = el('option', null, m); o.value = String(i + 1); monthSel.appendChild(o); });
+    var yearSel = el('select', 'pp-select pp-year');
+    yearSel.setAttribute('aria-label', 'Select year');
+    selects.appendChild(monthSel);
+    selects.appendChild(yearSel);
+    head.appendChild(prev); head.appendChild(selects); head.appendChild(next);
+    card.appendChild(head);
+
+    var body = el('div', 'pp-body');
+    var dow = el('div', 'pp-grid pp-dow');
+    WEEKDAYS.forEach(function (w) { dow.appendChild(el('div', null, w)); });
+    var grid = el('div', 'pp-grid pp-days');
+    body.appendChild(dow); body.appendChild(grid);
+    card.appendChild(body);
+
+    var today = button('pp-link', 'Today');
+    var links = today;
+    if (optional) {
+      links = el('span', 'pp-links');
+      var clear = button('pp-link', 'Clear');
+      clear.addEventListener('click', function () { commit(''); close(); });
+      links.appendChild(today);
+      links.appendChild(clear);
+    }
+    var setBtn = footer(card, function () {
+      if (!sel) { close(); return; }
+      commit(fmtDate(sel.y, sel.m, sel.d));
+      close();
+    }, links);
+
+    function fillYears() {
+      var first = Math.min(now.getFullYear() - 100, viewY), last = Math.max(now.getFullYear() + 50, viewY);
+      if (+yearSel.getAttribute('data-first') === first && +yearSel.getAttribute('data-last') === last) return;
+      yearSel.innerHTML = '';
+      for (var y = first; y <= last; y++) { var o = el('option', null, String(y)); o.value = String(y); yearSel.appendChild(o); }
+      yearSel.setAttribute('data-first', first); yearSel.setAttribute('data-last', last);
+    }
+
+    function draw() {
+      fillYears();
+      monthSel.value = String(viewM);
+      yearSel.value = String(viewY);
+      grid.innerHTML = '';
+      var offset = (new Date(viewY, viewM - 1, 1).getDay() + 6) % 7;
+      var days = new Date(viewY, viewM, 0).getDate();
+      for (var i = 0; i < offset; i++) grid.appendChild(el('div'));
+      for (var d = 1; d <= days; d++) {
+        var s = fmtDate(viewY, viewM, d);
+        var isSel = !!sel && sel.y === viewY && sel.m === viewM && sel.d === d;
+        var b = button('pp-day' + (isSel ? ' pp-selected' : '') + (s === todayStr ? ' pp-today' : ''), String(d),
+          new Date(viewY, viewM - 1, d).toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }));
+        b.setAttribute('aria-pressed', String(isSel));
+        b.setAttribute('data-day', String(d));
+        grid.appendChild(b);
+      }
+      setBtn.disabled = !sel;
+    }
+
+    function changeView(y, m) {
+      viewY = y; viewM = m;
+      if (sel) sel = { y: y, m: m, d: Math.min(sel.d, new Date(y, m, 0).getDate()) };
+      draw();
+    }
+
+    grid.addEventListener('click', function (e) {
+      var b = e.target.closest('[data-day]');
+      if (!b) return;
+      sel = { y: viewY, m: viewM, d: +b.getAttribute('data-day') };
+      draw();
+      var again = grid.querySelector('.pp-selected');
+      if (again) again.focus({ preventScroll: true });
+    });
+    prev.addEventListener('click', function () { changeView(viewM === 1 ? viewY - 1 : viewY, viewM === 1 ? 12 : viewM - 1); });
+    next.addEventListener('click', function () { changeView(viewM === 12 ? viewY + 1 : viewY, viewM === 12 ? 1 : viewM + 1); });
+    monthSel.addEventListener('change', function () { changeView(viewY, +monthSel.value); });
+    yearSel.addEventListener('change', function () { changeView(+yearSel.value, viewM); });
+    today.addEventListener('click', function () {
+      viewY = now.getFullYear(); viewM = now.getMonth() + 1;
+      sel = { y: viewY, m: viewM, d: now.getDate() };
+      draw();
+    });
+    draw();
+  }
+
+  // ---------- Time panel ----------
+  function timePanel(card, value, commit) {
+    var t = parseTime(value);
+    var hour = t.h, minute = t.m;
+    var big = el('div', 'pp-time-display');
+    card.appendChild(big);
+    var cols = el('div', 'pp-time-cols');
+    card.appendChild(cols);
+
+    function column(label, count, get, set) {
+      var col = el('div', 'pp-time-col');
+      col.appendChild(el('div', 'pp-col-label', label));
+      var up = button('pp-step', ICONS.up, label + ' previous');
+      var list = el('div', 'pp-list');
+      for (var i = 0; i < count; i++) {
+        var b = button('pp-item', pad2(i), label + ' ' + pad2(i));
+        b.setAttribute('data-i', String(i));
+        list.appendChild(b);
+      }
+      var down = button('pp-step', ICONS.down, label + ' next');
+      col.appendChild(up); col.appendChild(list); col.appendChild(down);
+      cols.appendChild(col);
+      function choose(i, scroll) {
+        set((i + count) % count);
+        Array.prototype.forEach.call(list.children, function (b, idx) {
+          b.classList.toggle('pp-selected', idx === get());
+          b.setAttribute('aria-pressed', String(idx === get()));
+        });
+        if (scroll) list.scrollTop = Math.max(0, get() * ITEM_H - (LIST_H / 2 - ITEM_H / 2));
+        big.textContent = pad2(hour) + ' : ' + pad2(minute);
+      }
+      up.addEventListener('click', function () { choose(get() - 1, true); });
+      down.addEventListener('click', function () { choose(get() + 1, true); });
+      list.addEventListener('click', function (e) {
+        var b = e.target.closest('[data-i]');
+        if (b) choose(+b.getAttribute('data-i'), true);
+      });
+      return function () { choose(get(), true); };
+    }
+
+    var initH = column('Hour', 24, function () { return hour; }, function (v) { hour = v; });
+    var initM = column('Minute', 60, function () { return minute; }, function (v) { minute = v; });
+    footer(card, function () { commit(pad2(hour) + ':' + pad2(minute)); close(); });
+    // Centre the selected values once the card is in the page.
+    requestAnimationFrame(function () { initH(); initM(); });
+    initH(); initM();
+  }
+
+  // ---------- Public ----------
+  function enhance(input) {
+    var kind = input.getAttribute('type') === 'time' ? 'time' : 'date';
+    var placeholder = input.getAttribute('data-placeholder') || (kind === 'time' ? 'Select time' : 'Select date');
+    var optional = input.getAttribute('data-optional') === 'true';
+    var trigger = button('pp-trigger');
+    trigger.id = input.id + 'Btn';
+    var text = el('span', 'pp-trigger-text');
+    trigger.appendChild(text);
+    trigger.appendChild(el('span', 'pp-trigger-icon', kind === 'time' ? ICONS.clock : ICONS.calendar));
+    input.type = 'hidden';
+    input.parentNode.insertBefore(trigger, input);
+
+    function refresh() {
+      var v = valueDesc.get.call(input);
+      var shown = kind === 'time' ? (v || '') : displayDate(v);
+      text.textContent = shown || placeholder;
+      trigger.classList.toggle('pp-empty', !shown);
+    }
+    Object.defineProperty(input, 'value', {
+      configurable: true,
+      get: function () { return valueDesc.get.call(input); },
+      set: function (v) { valueDesc.set.call(input, v); refresh(); }
+    });
+    function commit(v) {
+      input.value = v;
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+      input.dispatchEvent(new Event('change', { bubbles: true }));
+    }
+    trigger.addEventListener('click', function () {
+      if (current) { close(); return; }
+      if (kind === 'time') openPopover(input, trigger, 260, 'Time picker', function (card) { timePanel(card, input.value, commit); });
+      else openPopover(input, trigger, 320, 'Date picker', function (card) { datePanel(card, input.value, commit, optional); });
+    });
+    refresh();
+    return trigger;
+  }
+
+  window.PenPicker = { enhance: enhance, close: close };
+})();
+
+  </script>
+  <script>
+/* Personal Organiser (on-device edition) — recurring and one-off tasks with a built-in calendar.
+ *
+ * Everything is stored in this browser on this device (localStorage). There is no account,
+ * no server and no synchronisation between devices; use Settings > Export / Import backup
+ * to move tasks by hand.
+ */
+(function () {
+  'use strict';
+
+  var STORE_KEY = 'personalOrganiserLocal.data.v1';
+  var FIRED_KEY = 'personalOrganiserLocal.fired.v1';
+  var VIEW_KEY = 'personalOrganiserLocal.view';
+  var DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+  var COLUMNS = [
+    { type: 'daily', title: 'Daily Tasks' },
+    { type: 'weekly', title: 'Weekly Tasks' },
+    { type: 'monthly', title: 'Monthly Tasks' },
+    { type: 'once', title: 'One-off Tasks' },
+    { type: 'custom', title: 'Custom Repeats' }
+  ];
+  var UNIT_DAYS = { days: 1, weeks: 7, months: 28 }; // shortest length of each unit (for the "days in a row" limit)
+
+  // ---------- Utilities ----------
+  function $(id) { return document.getElementById(id); }
+  function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 8); }
+  function esc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+  function pad(n) { return (n < 10 ? '0' : '') + n; }
+  function localDateKey(d) { return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); }
+  function toMs(v) { if (typeof v === 'number') return v; var n = Date.parse(v); return isNaN(n) ? 0 : n; }
+  function plural(n, word) { return n + ' ' + word + (n === 1 ? '' : 's'); }
+
+  // ---------- Storage ----------
+  function seedList() { return { id: uid(), name: 'Personal', updatedAt: Date.now() }; }
+
+  function defaultState() {
+    return { version: 1, lists: [seedList()], tasks: [], settings: { reminderMinutes: 0 } };
+  }
+
+  var TASK_FIELDS = ['id', 'listId', 'taskName', 'description', 'priority', 'status', 'scheduleType', 'scheduleTime',
+    'scheduleDayOfWeek', 'scheduleDayOfMonth', 'scheduleDate', 'weekdaysOnly', 'spanDays', 'repeatEvery', 'repeatUnit',
+    'endDate', 'exceptions', 'createdAt', 'updatedAt'];
+
+  // Accepts this app's data and backups from the Google-synced edition; drops deleted records and sync fields.
+  function normalise(d) {
+    var keep = function (x) { return x && !x.deleted; };
+    var out = {
+      version: 1,
+      lists: (d.lists || []).filter(keep).map(function (l) {
+        return { id: String(l.id), name: String(l.name || 'List'), updatedAt: toMs(l.updatedAt) };
+      }),
+      tasks: (d.tasks || []).filter(keep).map(function (t) {
+        var n = {};
+        TASK_FIELDS.forEach(function (k) { if (t[k] !== undefined) n[k] = t[k]; });
+        n.id = String(t.id);
+        n.updatedAt = toMs(t.updatedAt || t.createdAt);
+        return n;
+      }),
+      settings: { reminderMinutes: 0 }
+    };
+    var mins = d.settings && d.settings.reminderMinutes != null ? d.settings.reminderMinutes : (d.shared && d.shared.reminderMinutes);
+    out.settings.reminderMinutes = Number(mins) || 0;
+    if (!out.lists.length) out.lists.push(seedList());
+    var ids = new Set(out.lists.map(function (l) { return l.id; }));
+    out.tasks.forEach(function (t) { if (!ids.has(t.listId)) t.listId = out.lists[0].id; });
+    return out;
+  }
+
+  function loadState() {
+    try {
+      var raw = localStorage.getItem(STORE_KEY);
+      if (!raw) return defaultState();
+      var d = JSON.parse(raw);
+      if (!d || !Array.isArray(d.tasks) || !Array.isArray(d.lists)) return defaultState();
+      return normalise(d);
+    } catch (e) {
+      console.error('Could not read saved data', e);
+      return defaultState();
+    }
+  }
+
+  var state = loadState();
+  var ui = { listFilter: 'all', tab: 'daily', editingId: null };
+  ui.view = 'calendar';
+  try { if (localStorage.getItem(VIEW_KEY) === 'tasks') ui.view = 'tasks'; } catch (e) { /* preference is optional */ }
+  ui.month = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+  ui.selectedDate = localDateKey(new Date());
+
+  function save() {
+    try {
+      localStorage.setItem(STORE_KEY, JSON.stringify(state));
+    } catch (e) {
+      toast('Could not save on this device: ' + e.message, true);
+      throw e;
+    }
+  }
+
+  // Call after any user change so it is saved on this device.
+  function commit() {
+    save();
+    render();
+  }
+
+  function liveLists() { return state.lists; }
+  function liveTasks() { return state.tasks; }
+  function findList(id) { return state.lists.find(function (l) { return l.id === id; }); }
+  function listName(id) { var l = findList(id); return l ? l.name : 'Unlisted'; }
+
+  // ---------- Toast ----------
+  var toastTimer = null;
+  function toast(msg, isError) {
+    var t = $('toast');
+    t.textContent = msg;
+    t.className = 'toast' + (isError ? ' error' : '');
+    t.hidden = false;
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { t.hidden = true; }, isError ? 6000 : 3000);
+  }
+
+  // ---------- Confirm ----------
+  function confirmDialog(title, text, okLabel) {
+    return new Promise(function (resolve) {
+      $('confirmTitle').textContent = title;
+      $('confirmText').textContent = text;
+      $('confirmOk').textContent = okLabel || 'Delete';
+      var ov = $('confirmOverlay');
+      ov.hidden = false;
+      function done(v) {
+        ov.hidden = true;
+        $('confirmOk').onclick = null;
+        $('confirmCancel').onclick = null;
+        resolve(v);
+      }
+      $('confirmOk').onclick = function () { done(true); };
+      $('confirmCancel').onclick = function () { done(false); };
+    });
+  }
+
+  // ---------- Schedule helpers ----------
+  function formatDate(key) {
+    return dateFromKey(key).toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
+  }
+
+  function shortDay(key) { return dateFromKey(key).toLocaleDateString(undefined, { weekday: 'short' }); }
+  function addDays(key, n) { var d = dateFromKey(key); d.setDate(d.getDate() + n); return localDateKey(d); }
+  // Whole days from a to b (date keys), immune to daylight-saving changes.
+  function dayDiff(a, b) {
+    var pa = a.split('-'), pb = b.split('-');
+    return Math.round((Date.UTC(+pb[0], pb[1] - 1, +pb[2]) - Date.UTC(+pa[0], pa[1] - 1, +pa[2])) / 864e5);
+  }
+  // Start of the k-th monthly block: same day of month as the first block, or the month's last day if shorter.
+  function addMonthsKey(key, k) {
+    var p = key.split('-');
+    var y = +p[0], m = +p[1] - 1 + k;
+    var last = new Date(y, m + 1, 0).getDate();
+    return localDateKey(new Date(y, m, Math.min(+p[2], last)));
+  }
+  function unitLabel(n, unit) { return n === 1 ? unit.replace(/s$/, '') : n + ' ' + unit; }
+
+  function formatSchedule(t) {
+    if (t.scheduleType === 'once') return (t.scheduleDate ? formatDate(t.scheduleDate) : 'No date') + ' at ' + t.scheduleTime;
+    if (t.scheduleType === 'daily') return (t.weekdaysOnly ? 'Weekdays at ' : 'Daily at ') + t.scheduleTime;
+    if (t.scheduleType === 'weekly') return DAYS[t.scheduleDayOfWeek || 0] + ' at ' + t.scheduleTime;
+    if (t.scheduleType === 'custom') {
+      var span = Number(t.spanDays) || 1;
+      var days = span === 1 ? shortDay(t.scheduleDate) : shortDay(t.scheduleDate) + '–' + shortDay(addDays(t.scheduleDate, span - 1));
+      return (span === 1 ? '1 day' : span + ' days') + (t.repeatUnit !== 'days' ? ' (' + days + ')' : '') +
+        ', every ' + unitLabel(Number(t.repeatEvery) || 1, t.repeatUnit) + ' at ' + t.scheduleTime +
+        ', from ' + formatDate(t.scheduleDate) + (t.endDate ? ' until ' + formatDate(t.endDate) : '');
+    }
+    return 'Day ' + t.scheduleDayOfMonth + ' at ' + t.scheduleTime;
+  }
+
+  // For custom repeats: which day of its block (0-based) a date is, or -1 if it is not in a block.
+  function customDayIndex(t, key) {
+    if (!t.scheduleDate || key < t.scheduleDate || (t.endDate && key > t.endDate)) return -1;
+    var span = Number(t.spanDays) || 1, every = Number(t.repeatEvery) || 1;
+    if (t.repeatUnit === 'months') {
+      var s = t.scheduleDate.split('-'), d = key.split('-');
+      var months = (d[0] - s[0]) * 12 + (d[1] - s[1]);
+      for (var k = Math.floor(months / every) * every; k >= 0 && k >= months - every - 1; k -= every) {
+        var off = dayDiff(addMonthsKey(t.scheduleDate, k), key);
+        if (off >= 0 && off < span) return off;
+      }
+      return -1;
+    }
+    var period = every * (t.repeatUnit === 'weeks' ? 7 : 1);
+    var offset = dayDiff(t.scheduleDate, key) % period;
+    return offset < span ? offset : -1;
+  }
+
+  // Does the normal schedule (ignoring per-day changes) put the task on this date?
+  function scheduledOn(t, d) {
+    var key = localDateKey(d);
+    if (t.scheduleType === 'once') return !!t.scheduleDate && key === t.scheduleDate;
+    if (t.scheduleType === 'custom') return customDayIndex(t, key) >= 0;
+    if (t.scheduleType === 'daily') {
+      var dow = d.getDay();
+      return !t.weekdaysOnly || (dow >= 1 && dow <= 5);
+    }
+    if (t.scheduleType === 'weekly') return d.getDay() === Number(t.scheduleDayOfWeek);
+    return d.getDate() === Number(t.scheduleDayOfMonth);
+  }
+
+  function exceptionFor(t, key) { return t.exceptions && t.exceptions[key] ? t.exceptions[key] : null; }
+
+  // The task as it happens on one date (with that day's changes), or null if it does not happen.
+  function occurrence(t, d) {
+    if (!scheduledOn(t, d)) return null;
+    var key = localDateKey(d);
+    var ex = t.scheduleType === 'once' ? null : exceptionFor(t, key);
+    if (ex && ex.removed) return null;
+    return {
+      task: t, key: key,
+      time: (ex && ex.time) || t.scheduleTime,
+      status: (ex && ex.status) || t.status,
+      note: (ex && ex.note) || '',
+      changed: !!ex,
+      dayIndex: t.scheduleType === 'custom' ? customDayIndex(t, key) : -1
+    };
+  }
+
+  function occursOn(t, d) { return !!occurrence(t, d); }
+
+  function changedDayCount(t) { return t.exceptions ? Object.keys(t.exceptions).length : 0; }
+
+  // ---------- Rendering ----------
+  function renderListFilter() {
+    var sel = $('listFilter');
+    var lists = liveLists();
+    var html = '<option value="all">All lists</option>';
+    lists.forEach(function (l) { html += '<option value="' + esc(l.id) + '">' + esc(l.name) + '</option>'; });
+    sel.innerHTML = html;
+    if (ui.listFilter !== 'all' && !lists.some(function (l) { return l.id === ui.listFilter; })) ui.listFilter = 'all';
+    sel.value = ui.listFilter;
+  }
+
+  function visibleTasks() {
+    return liveTasks().filter(function (t) { return ui.listFilter === 'all' || t.listId === ui.listFilter; });
+  }
+
+  function renderTask(t) {
+    var showList = ui.listFilter === 'all' && liveLists().length > 1;
+    return '<article class="task' + (t.status === 'completed' ? ' completed' : '') + '" data-id="' + esc(t.id) + '" tabindex="0" aria-label="' + esc(t.taskName + ', ' + formatSchedule(t) + '. Press Enter to edit.') + '">' +
+      '<div class="task-top"><div style="min-width:0">' +
+      '<h3 class="task-name">' + esc(t.taskName) + '</h3>' +
+      (t.description ? '<p class="task-desc" title="' + esc(t.description) + '">' + esc(t.description) + '</p>' : '') +
+      '<div class="task-meta"><span>' + esc(formatSchedule(t)) + '</span>' +
+      (showList ? '<span>' + esc(listName(t.listId)) + '</span>' : '') +
+      (changedDayCount(t) ? '<span class="changed-flag">' + plural(changedDayCount(t), 'day') + ' changed</span>' : '') + '</div>' +
+      '</div><div class="badges">' +
+      '<span class="badge p-' + esc(t.priority) + '">' + esc(t.priority) + '</span>' +
+      '<span class="badge s-' + esc(t.status) + '">' + esc(String(t.status).replace('_', ' ')) + '</span>' +
+      '</div></div>' +
+      '<div class="task-actions">' +
+      '<button type="button" class="btn btn-dark btn-sm" data-action="edit" data-id="' + esc(t.id) + '">Edit</button>' +
+      '<button type="button" class="btn btn-danger-outline btn-sm" data-action="delete" data-id="' + esc(t.id) + '">Delete</button>' +
+      '</div></article>';
+  }
+
+  function render() {
+    renderListFilter();
+    $('calendarView').hidden = ui.view !== 'calendar';
+    $('tasksView').hidden = ui.view !== 'tasks';
+    document.querySelectorAll('[data-view]').forEach(function (b) {
+      var active = b.getAttribute('data-view') === ui.view;
+      b.classList.toggle('active', active);
+      b.setAttribute('aria-pressed', String(active));
+    });
+    renderCalendar();
+    var tasks = visibleTasks();
+    var html = '';
+    COLUMNS.forEach(function (c) {
+      var col = tasks.filter(function (t) { return t.scheduleType === c.type; })
+        .sort(function (a, b) { return String(a.scheduleDate || '').localeCompare(String(b.scheduleDate || '')) || a.scheduleTime.localeCompare(b.scheduleTime); });
+      html += '<div class="column' + (ui.tab === c.type ? ' active' : '') + '" data-type="' + c.type + '">' +
+        '<div class="column-header"><div class="column-title">' + c.title + ' <span class="count">' + col.length + '</span></div>' +
+        '<button type="button" class="btn btn-primary btn-sm" data-action="add" data-type="' + c.type + '" aria-label="Add ' + c.title.toLowerCase().replace(' tasks', '') + ' task">+ Add</button></div>' +
+        '<div class="column-body">' +
+         (col.length ? col.map(renderTask).join('') : '<div class="empty"><span class="empty-mark" aria-hidden="true">+</span><strong>' + (c.type === 'once' ? 'Nothing one-off planned' : c.type === 'custom' ? 'No custom repeats yet' : 'A little room for a routine') + '</strong><p>No ' + c.title.toLowerCase() + ' yet. ' + (c.type === 'once' ? 'Add something that only needs doing once, on a set date.' : c.type === 'custom' ? 'For things that run several days in a row and repeat, like a course every second weekend.' : 'Add something you want to keep on track.') + '</p><button type="button" class="btn btn-dark" data-action="add" data-type="' + c.type + '">' + (c.type === 'once' ? 'Add a one-off task' : c.type === 'custom' ? 'Add a custom repeat' : 'Add a ' + c.type + ' task') + '</button></div>') +
+        '</div></div>';
+    });
+    $('columns').innerHTML = html;
+    document.querySelectorAll('#mobileTabs button').forEach(function (b) {
+      b.classList.toggle('active', b.getAttribute('data-tab') === ui.tab);
+      b.setAttribute('aria-selected', String(b.getAttribute('data-tab') === ui.tab));
+    });
+  }
+
+  // ---------- Calendar presentation (no occurrence-specific state) ----------
+  function dateFromKey(key) {
+    var parts = key.split('-');
+    return new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
+  }
+
+  // Everything happening on a date, as occurrences ({ task, time, status, note, ... }).
+  function tasksOn(date) {
+    return visibleTasks().map(function (t) { return occurrence(t, date); }).filter(Boolean)
+      .sort(function (a, b) { return a.time.localeCompare(b.time) || a.task.taskName.localeCompare(b.task.taskName); });
+  }
+
+  function occAttrs(o) { return ' data-edit-task="' + esc(o.task.id) + '" data-occ-date="' + o.key + '"'; }
+  function blockLabel(o) {
+    var span = Number(o.task.spanDays) || 1;
+    return o.dayIndex >= 0 && span > 1 ? 'Day ' + (o.dayIndex + 1) + ' of ' + span : '';
+  }
+
+  function renderCalendar() {
+    var month = ui.month;
+    var today = localDateKey(new Date());
+    $('monthTitle').textContent = month.toLocaleDateString(undefined, { month: 'long', year: 'numeric' });
+    var start = new Date(month.getFullYear(), month.getMonth(), 1 - month.getDay());
+    var weeks = Math.ceil((month.getDay() + new Date(month.getFullYear(), month.getMonth() + 1, 0).getDate()) / 7);
+    var html = '';
+    for (var i = 0; i < weeks * 7; i++) {
+      var day = new Date(start.getFullYear(), start.getMonth(), start.getDate() + i);
+      var key = localDateKey(day);
+      var tasks = tasksOn(day);
+      var label = day.toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+      html += '<div class="calendar-cell' + (day.getMonth() !== month.getMonth() ? ' outside' : '') +
+        (key === today ? ' is-today' : '') + (key === ui.selectedDate ? ' selected' : '') + '">' +
+        '<button type="button" class="day-select" data-date="' + key + '" aria-label="' + esc(label + ', ' + plural(tasks.length, 'task')) +
+        '" aria-pressed="' + (key === ui.selectedDate) + '"' + (key === today ? ' aria-current="date"' : '') +
+        '><span class="day-number">' + day.getDate() + '</span><span class="mobile-day-count">' + (tasks.length ? tasks.length + (tasks.length === 1 ? ' task' : ' tasks') : '') + '</span></button>' +
+        '<div class="calendar-events">';
+      tasks.slice(0, 3).forEach(function (o) {
+        var t = o.task;
+        html += '<button type="button" class="event-chip p-' + esc(t.priority) + (o.status === 'completed' ? ' completed' : '') + (o.changed ? ' changed' : '') +
+          '"' + occAttrs(o) + ' title="' + esc(o.time + ' ' + t.taskName + ' · ' + listName(t.listId) + (o.note ? ' · ' + o.note : '')) +
+          '"><span>' + esc(o.time) + '</span> ' + esc(t.taskName) + '</button>';
+      });
+      if (tasks.length > 3) html += '<button type="button" class="more-events" data-date="' + key + '" data-show-agenda="true">+' + (tasks.length - 3) + ' more</button>';
+      html += '</div><div class="mobile-dots" aria-hidden="true">';
+      tasks.slice(0, 4).forEach(function (o) { html += '<i class="dot p-' + esc(o.task.priority) + (o.status === 'completed' ? ' completed' : '') + '"></i>'; });
+      html += '</div></div>';
+    }
+    $('calendarGrid').innerHTML = html;
+    var selected = dateFromKey(ui.selectedDate);
+    $('agendaTitle').textContent = selected.toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' });
+    var agenda = tasksOn(selected);
+    $('agendaTasks').innerHTML = agenda.length ? agenda.map(function (o) {
+      var t = o.task;
+      var extra = [blockLabel(o), o.changed ? 'Changed for this day' : '', o.note].filter(Boolean).join(' · ');
+      return '<button type="button" class="agenda-item' + (o.status === 'completed' ? ' completed' : '') + '"' + occAttrs(o) + '>' +
+        '<span class="agenda-time">' + esc(o.time) + '</span><i class="dot p-' + esc(t.priority) + '" aria-hidden="true"></i>' +
+        '<span class="agenda-details"><strong>' + esc(t.taskName) + '</strong><span>' + esc(listName(t.listId)) + ' · ' + esc(formatSchedule(t)) + '</span>' +
+        (extra ? '<span class="agenda-extra">' + esc(extra) + '</span>' : '') + '</span>' +
+        '<span class="agenda-status">' + esc(String(o.status).replace('_', ' ')) + '</span><span class="agenda-chevron" aria-hidden="true">&#8250;</span></button>';
+    }).join('') : '<div class="agenda-empty"><span class="empty-mark" aria-hidden="true">—</span><div><strong>A little breathing room.</strong><p>' +
+      (visibleTasks().length ? 'No tasks scheduled for this day.' : (liveTasks().length ? 'No tasks in this list yet. Choose another list or add a routine.' : 'Start with one small routine. Add your first task to see it on the calendar.')) +
+      '</p></div></div>';
+  }
+
+  function addTaskForDay() {
+    var day = dateFromKey(ui.selectedDate);
+    openTaskModal(null, 'once');
+    $('fDate').value = ui.selectedDate;
+    $('fDayOfWeek').value = String(day.getDay());
+    $('fDayOfMonth').value = String(day.getDate());
+  }
+
+  // ---------- Task modal ----------
+  function fillSelectors() {
+    $('fDayOfWeek').innerHTML = DAYS.map(function (d, i) { return '<option value="' + i + '">' + d + '</option>'; }).join('');
+    var dom = '';
+    for (var i = 1; i <= 31; i++) dom += '<option value="' + i + '">' + i + '</option>';
+    $('fDayOfMonth').innerHTML = dom;
+  }
+
+  function updateScheduleFields() {
+    var type = $('fScheduleType').value;
+    $('weekdaysWrap').hidden = type !== 'daily';
+    $('dowWrap').hidden = type !== 'weekly';
+    $('domWrap').hidden = type !== 'monthly';
+    $('dateWrap').hidden = type !== 'once' && type !== 'custom';
+    $('dateLabel').textContent = type === 'custom' ? 'First day' : 'Date';
+    $('customWrap').hidden = type !== 'custom';
+    $('routineNotice').hidden = type === 'once';
+    renderCustomPreview();
+    renderChangedDays();
+  }
+
+  // The schedule as currently filled in on the form (used for the preview and saving).
+  function formSchedule() {
+    var type = $('fScheduleType').value;
+    return {
+      scheduleType: type,
+      scheduleTime: $('fTime').value,
+      scheduleDayOfWeek: type === 'weekly' ? Number($('fDayOfWeek').value) : null,
+      scheduleDayOfMonth: type === 'monthly' ? Number($('fDayOfMonth').value) : null,
+      scheduleDate: type === 'once' || type === 'custom' ? $('fDate').value : null,
+      weekdaysOnly: type === 'daily' ? $('fWeekdays').checked : false,
+      spanDays: type === 'custom' ? Math.floor(Number($('fSpanDays').value)) : null,
+      repeatEvery: type === 'custom' ? Math.floor(Number($('fRepeatEvery').value)) : null,
+      repeatUnit: type === 'custom' ? $('fRepeatUnit').value : null,
+      endDate: type === 'custom' ? ($('fEndDate').value || null) : null
+    };
+  }
+
+  // Returns an error message, or '' if the custom repeat makes sense.
+  function customProblem(f) {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(f.scheduleDate || '')) return 'Please choose the first day.';
+    if (!(f.spanDays >= 1 && f.spanDays <= 31)) return 'Days in a row must be between 1 and 31.';
+    if (!(f.repeatEvery >= 1 && f.repeatEvery <= 99)) return 'Repeat every must be between 1 and 99.';
+    var shortest = f.repeatEvery * UNIT_DAYS[f.repeatUnit];
+    if (f.spanDays > shortest) return 'Days in a row (' + f.spanDays + ') must fit inside the repeat (every ' + unitLabel(f.repeatEvery, f.repeatUnit) + ').';
+    if (f.endDate && f.endDate < f.scheduleDate) return 'Repeat until must be on or after the first day.';
+    return '';
+  }
+
+  function blockText(a, b) {
+    var o = { weekday: 'short', day: 'numeric', month: 'short' };
+    var da = dateFromKey(a), db = dateFromKey(b);
+    return a === b ? da.toLocaleDateString(undefined, o) : da.toLocaleDateString(undefined, o) + ' – ' + db.toLocaleDateString(undefined, o);
+  }
+
+  // Groups the task's upcoming days into runs of consecutive days.
+  function upcomingBlocks(t, fromKey, max) {
+    var blocks = [], cur = null, key = fromKey;
+    for (var i = 0; i < 800 && blocks.length <= max; i++, key = addDays(key, 1)) {
+      if (t.endDate && key > t.endDate) break;
+      if (occursOn(t, dateFromKey(key))) {
+        if (cur && addDays(cur.end, 1) === key) cur.end = key; else { cur = { start: key, end: key }; blocks.push(cur); }
+      }
+    }
+    return blocks.slice(0, max);
+  }
+
+  function renderCustomPreview() {
+    var box = $('customPreview');
+    if ($('fScheduleType').value !== 'custom') { box.innerHTML = ''; return; }
+    var f = formSchedule();
+    var problem = customProblem(f);
+    if (problem) { box.innerHTML = '<span class="preview-problem">' + esc(problem) + '</span>'; return; }
+    var draft = Object.assign({ exceptions: ui.draftExceptions }, f);
+    var today = localDateKey(new Date());
+    var from = f.scheduleDate > today ? f.scheduleDate : today;
+    var blocks = upcomingBlocks(draft, from, 4);
+    box.innerHTML = '<strong>' + (from === f.scheduleDate ? 'First dates' : 'Next dates') + '</strong>' +
+      (blocks.length ? '<ul>' + blocks.map(function (b) { return '<li>' + esc(blockText(b.start, b.end)) + '</li>'; }).join('') + '</ul>'
+        : '<p>No more dates in this schedule.</p>');
+  }
+
+  function describeChange(ex) {
+    if (ex.removed) return 'Removed';
+    return [ex.time ? 'time ' + ex.time : '', ex.status ? String(ex.status).replace('_', ' ') : '', ex.note ? '"' + ex.note + '"' : '']
+      .filter(Boolean).join(', ') || 'Changed';
+  }
+
+  function renderChangedDays() {
+    var ex = ui.draftExceptions || {};
+    var f = formSchedule();
+    var keys = Object.keys(ex).sort().filter(function (k) { return f.scheduleType !== 'once' && scheduledOn(f, dateFromKey(k)); });
+    $('changedDaysWrap').hidden = !keys.length;
+    $('changedDaysList').innerHTML = keys.map(function (k) {
+      return '<li><span><strong>' + esc(formatDate(k)) + '</strong> ' + esc(describeChange(ex[k])) + '</span>' +
+        '<button type="button" class="btn btn-dark btn-sm" data-restore="' + k + '">Restore</button></li>';
+    }).join('');
+  }
+
+  function openTaskModal(task, type) {
+    ui.editingId = task ? task.id : null;
+    var lists = liveLists();
+    $('taskModalTitle').textContent = task ? 'Edit Task' : 'Add Task';
+    $('saveTaskBtn').textContent = task ? 'Update' : 'Create';
+    $('deleteTaskBtn').hidden = !task;
+    $('taskFormError').hidden = true;
+    $('fList').innerHTML = lists.map(function (l) { return '<option value="' + esc(l.id) + '">' + esc(l.name) + '</option>'; }).join('');
+    var defaultList = ui.listFilter !== 'all' ? ui.listFilter : lists[0].id;
+    $('fTaskName').value = task ? task.taskName : '';
+    $('fDescription').value = task ? (task.description || '') : '';
+    $('fList').value = task ? task.listId : defaultList;
+    if (!$('fList').value) $('fList').value = lists[0].id;
+    $('fPriority').value = task ? task.priority : 'medium';
+    $('fStatus').value = task ? task.status : 'pending';
+    $('fScheduleType').value = task ? task.scheduleType : (type || 'daily');
+    $('fTime').value = task ? task.scheduleTime : '09:00';
+    $('fWeekdays').checked = task ? !!task.weekdaysOnly : true;
+    $('fDayOfWeek').value = String(task && task.scheduleDayOfWeek != null ? task.scheduleDayOfWeek : 1);
+    $('fDayOfMonth').value = String(task && task.scheduleDayOfMonth != null ? task.scheduleDayOfMonth : 1);
+    $('fDate').value = task && task.scheduleDate ? task.scheduleDate : localDateKey(new Date());
+    $('fSpanDays').value = String(task && task.spanDays ? task.spanDays : 3);
+    $('fRepeatEvery').value = String(task && task.repeatEvery ? task.repeatEvery : 2);
+    $('fRepeatUnit').value = task && task.repeatUnit ? task.repeatUnit : 'weeks';
+    $('fEndDate').value = task && task.endDate ? task.endDate : '';
+    ui.draftExceptions = Object.assign({}, task && task.exceptions);
+    updateScheduleFields();
+    $('taskOverlay').hidden = false;
+    setTimeout(function () { $('fTaskName').focus(); }, 50);
+  }
+
+  function closeOverlay(id) { window.PenPicker.close(); $(id).hidden = true; }
+
+  function submitTask(e) {
+    e.preventDefault();
+    var name = $('fTaskName').value.trim();
+    var time = $('fTime').value;
+    var err = $('taskFormError');
+    if (!name) { err.textContent = 'Please enter a task name.'; err.hidden = false; return; }
+    if (!/^\d{2}:\d{2}$/.test(time)) { err.textContent = 'Please choose a time.'; err.hidden = false; return; }
+    var type = $('fScheduleType').value;
+    if (type === 'once' && !/^\d{4}-\d{2}-\d{2}$/.test($('fDate').value)) { err.textContent = 'Please choose a date.'; err.hidden = false; return; }
+    var sched = formSchedule();
+    if (type === 'custom') {
+      var problem = customProblem(sched);
+      if (problem) { err.textContent = problem; err.hidden = false; return; }
+    }
+    // Keep only day changes that still fall on a scheduled day.
+    var exceptions = {};
+    if (type !== 'once') {
+      Object.keys(ui.draftExceptions || {}).forEach(function (k) {
+        if (scheduledOn(sched, dateFromKey(k))) exceptions[k] = ui.draftExceptions[k];
+      });
+    }
+    var desc = $('fDescription').value.trim();
+    var data = Object.assign(sched, {
+      listId: $('fList').value,
+      taskName: name,
+      description: desc || null,
+      priority: $('fPriority').value,
+      status: $('fStatus').value,
+      exceptions: Object.keys(exceptions).length ? exceptions : null,
+      updatedAt: Date.now()
+    });
+    var editing = !!ui.editingId;
+    if (editing) {
+      var task = state.tasks.find(function (t) { return t.id === ui.editingId; });
+      if (!task) { err.textContent = 'This task no longer exists.'; err.hidden = false; return; }
+      Object.assign(task, data);
+    } else {
+      state.tasks.push(Object.assign({ id: uid(), createdAt: Date.now() }, data));
+    }
+    ui.tab = type;
+    closeOverlay('taskOverlay');
+    commit();
+    toast(editing ? 'Task updated' : 'Task created');
+  }
+
+  // ---------- One day of a repeating task ----------
+  function openOccurrence(task, key) {
+    var d = dateFromKey(key);
+    var o = occurrence(task, d);
+    if (!o) return;
+    ui.occ = { id: task.id, key: key };
+    $('occTaskName').textContent = task.taskName;
+    $('occDate').textContent = d.toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }) +
+      (blockLabel(o) ? ' · ' + blockLabel(o) : '');
+    $('occSeries').textContent = formatSchedule(task);
+    $('fOccTime').value = o.time;
+    $('fOccStatus').value = o.status;
+    $('fOccNote').value = o.note;
+    $('occResetBtn').hidden = !o.changed;
+    $('occOverlay').hidden = false;
+  }
+
+  function occTask() { return ui.occ && state.tasks.find(function (t) { return t.id === ui.occ.id; }); }
+
+  function setException(task, key, ex) {
+    task.exceptions = Object.assign({}, task.exceptions);
+    if (ex) task.exceptions[key] = ex; else delete task.exceptions[key];
+    if (!Object.keys(task.exceptions).length) task.exceptions = null;
+    task.updatedAt = Date.now();
+  }
+
+  function saveOccurrence(e) {
+    e.preventDefault();
+    var task = occTask();
+    if (!task) return closeOverlay('occOverlay');
+    var ex = {};
+    var time = $('fOccTime').value, status = $('fOccStatus').value, note = $('fOccNote').value.trim();
+    if (time && time !== task.scheduleTime) ex.time = time;
+    if (status !== task.status) ex.status = status;
+    if (note) ex.note = note;
+    setException(task, ui.occ.key, Object.keys(ex).length ? ex : null);
+    closeOverlay('occOverlay');
+    commit();
+    toast('Saved for ' + formatDate(ui.occ.key));
+  }
+
+  async function removeOccurrence() {
+    var task = occTask();
+    if (!task) return;
+    var key = ui.occ.key;
+    $('occOverlay').hidden = true;
+    var ok = await confirmDialog('Remove this day?', 'Remove "' + task.taskName + '" on ' + formatDate(key) +
+      '? Only this day is removed; the rest of the schedule stays the same. You can restore it from Edit all days.', 'Remove day');
+    if (!ok) { $('occOverlay').hidden = false; return; }
+    setException(task, key, { removed: true });
+    commit();
+    toast('Removed ' + formatDate(key));
+  }
+
+  function removeTasks(ids) {
+    state.tasks = state.tasks.filter(function (t) { return ids.indexOf(t.id) === -1; });
+  }
+
+  async function deleteTask(id) {
+    var task = state.tasks.find(function (t) { return t.id === id; });
+    if (!task) return;
+    var ok = await confirmDialog('Delete task?', 'Delete "' + task.taskName + '"? This cannot be undone.');
+    if (!ok) return;
+    removeTasks([id]);
+    closeOverlay('taskOverlay');
+    commit();
+    toast('Task deleted');
+  }
+
+  // ---------- Lists ----------
+  function renderListManager() {
+    var lists = liveLists();
+    $('listManager').innerHTML = lists.map(function (l) {
+      var count = liveTasks().filter(function (t) { return t.listId === l.id; }).length;
+      return '<li data-id="' + esc(l.id) + '">' +
+        '<input type="text" value="' + esc(l.name) + '" maxlength="80" data-action="rename" aria-label="List name" />' +
+        '<span class="list-count">' + plural(count, 'task') + '</span>' +
+        '<button type="button" class="btn btn-danger-outline btn-sm" data-action="delete-list"' + (lists.length === 1 ? ' disabled title="Keep at least one list"' : '') + '>Delete</button>' +
+        '</li>';
+    }).join('');
+  }
+
+  async function deleteList(id) {
+    var l = findList(id);
+    if (!l || liveLists().length === 1) return;
+    var tasks = liveTasks().filter(function (t) { return t.listId === id; });
+    var msg = tasks.length
+      ? 'Delete the list "' + l.name + '" and its ' + plural(tasks.length, 'task') + '? This cannot be undone.'
+      : 'Delete the list "' + l.name + '"?';
+    $('listsOverlay').hidden = true;
+    var ok = await confirmDialog('Delete list?', msg);
+    $('listsOverlay').hidden = false;
+    if (!ok) return;
+    removeTasks(tasks.map(function (t) { return t.id; }));
+    state.lists = state.lists.filter(function (x) { return x.id !== id; });
+    renderListManager();
+    commit();
+  }
+
+  // ---------- Notifications ----------
+  function notifSupported() { return 'Notification' in window; }
+
+  async function showNotification(title, body, tag) {
+    if (!notifSupported() || Notification.permission !== 'granted') return false;
+    var opts = { body: body, tag: tag, icon: window.PO_ICON_PNG || undefined };
+    try {
+      new Notification(title, opts);
+      return true;
+    } catch (e) {
+      console.error('Notification failed', e);
+      return false;
+    }
+  }
+
+  function loadFired() {
+    try { return JSON.parse(localStorage.getItem(FIRED_KEY)) || {}; } catch (e) { return {}; }
+  }
+
+  function checkReminders() {
+    var now = new Date();
+    var lead = Number(state.settings.reminderMinutes) || 0;
+    var target = new Date(now.getTime() + lead * 60000);
+    var hhmm = pad(target.getHours()) + ':' + pad(target.getMinutes());
+    var fired = loadFired();
+    var today = localDateKey(now);
+    var changed = false;
+    Object.keys(fired).forEach(function (k) { if (fired[k] !== today) { delete fired[k]; changed = true; } });
+    liveTasks().forEach(function (t) {
+      var o = occurrence(t, target);
+      if (!o || o.status === 'completed' || o.time !== hhmm) return;
+      var key = t.id + '@' + localDateKey(target) + 'T' + hhmm;
+      if (fired[key]) return;
+      fired[key] = today;
+      changed = true;
+      var when = lead ? 'In ' + lead + ' min (' + o.time + ')' : 'Now (' + o.time + ')';
+      var extra = o.note || t.description;
+      showNotification(t.taskName, when + (extra ? ' - ' + extra : ''), key).then(function (shown) {
+        if (!shown) toast('Reminder: ' + t.taskName + ' at ' + o.time);
+      });
+    });
+    if (changed) { try { localStorage.setItem(FIRED_KEY, JSON.stringify(fired)); } catch (e) { /* reminder log is optional */ } }
+  }
+
+  // ---------- Install & storage ----------
+  var installEvent = null;
+  var persisted = false;
+
+  function promptInstall() {
+    if (!installEvent) { renderSettings(); $('settingsOverlay').hidden = false; return; }
+    var ev = installEvent;
+    installEvent = null;
+    ev.prompt();
+    ev.userChoice.then(renderInstall, renderInstall);
+  }
+
+  function installHelpText() {
+    var ua = navigator.userAgent;
+    var iOS = /iphone|ipad|ipod/i.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    if (isStandalone()) return 'This app is installed and running on its own.';
+    if (location.protocol === 'file:') {
+      return 'You opened this file straight from your device, so it works offline but cannot be installed. ' +
+        'To install it, open it from a secure (https://) web address; see the instructions that came with the file.';
+    }
+    if (installEvent) return 'Tap Install app to add it to your apps, home screen or taskbar.';
+    if (iOS) return 'In Safari, tap the Share button, then "Add to Home Screen".';
+    if (/safari/i.test(ua) && !/chrome|chromium|edg|firefox|fxios|crios/i.test(ua)) return 'In Safari on Mac, choose File > Add to Dock.';
+    if (/firefox|fxios/i.test(ua)) return /android/i.test(ua)
+      ? 'In Firefox, open the menu (three dots) and choose "Add app to Home screen" or "Install".'
+      : 'Firefox on computers cannot install web apps. Open this page in Chrome, Edge or Safari to install it, or keep it bookmarked.';
+    return 'Use the install icon in the address bar, or the browser menu > "Install app" / "Add to Home screen".';
+  }
+
+  function renderInstall() {
+    var canPrompt = !!installEvent && !isStandalone();
+    $('installBtn').hidden = !canPrompt;
+    $('installSettingsBtn').hidden = !canPrompt;
+    $('installHelp').textContent = installHelpText();
+  }
+
+  function renderStorageStatus() {
+    var n = state.tasks.length;
+    $('storageStatus').textContent = plural(n, 'task') + ' in ' + plural(state.lists.length, 'list') + ' saved here.' +
+      (persisted ? ' The browser has agreed to keep this data.' : ' Tip: export a backup now and then, and install the app so the browser keeps your data.');
+  }
+
+  // ---------- Settings ----------
+  function isStandalone() {
+    return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+  }
+
+  function renderSettings() {
+    var ns = $('notifStatus');
+    var isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+    if (!notifSupported()) {
+      ns.textContent = isIOS && !isStandalone()
+        ? 'On iPhone, add this app to your Home Screen (Share > Add to Home Screen) and open it from there to allow reminders.'
+        : 'This browser does not support pop-up reminders.';
+      $('enableNotifBtn').disabled = true;
+      $('testNotifBtn').disabled = true;
+    } else {
+      var p = Notification.permission;
+      ns.textContent = p === 'granted' ? 'Pop-up reminders are allowed on this device.'
+        : p === 'denied' ? 'Reminders are blocked. Allow notifications for this app in your device or browser settings.'
+        : 'Pop-up reminders are not enabled yet.';
+      $('enableNotifBtn').disabled = p !== 'default';
+      $('testNotifBtn').disabled = p !== 'granted';
+    }
+    $('sReminderMinutes').value = String(state.settings.reminderMinutes || 0);
+    renderStorageStatus();
+    renderInstall();
+  }
+
+  function exportBackup() {
+    var data = { version: 1, lists: state.lists, tasks: state.tasks, settings: state.settings };
+    var blob = new Blob([JSON.stringify({ app: 'personal-organiser', exportedAt: new Date().toISOString(), data: data }, null, 2)], { type: 'application/json' });
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'personal-organiser-backup-' + localDateKey(new Date()) + '.json';
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+  }
+
+  async function importBackup(file) {
+    var text = await file.text();
+    var parsed;
+    try { parsed = JSON.parse(text); } catch (e) { toast('That file is not a valid backup.', true); return; }
+    var d = parsed && parsed.data ? parsed.data : parsed;
+    if (!d || !Array.isArray(d.tasks) || !Array.isArray(d.lists)) { toast('That file is not a Personal Organiser backup.', true); return; }
+    var incoming = normalise(d);
+    var msg = 'Importing replaces the ' + plural(state.tasks.length, 'task') + ' here with ' + plural(incoming.tasks.length, 'task') + ' from the backup.';
+    var ok = await confirmDialog('Replace all tasks?', msg, 'Import');
+    if (!ok) return;
+    state = incoming;
+    ui.listFilter = 'all';
+    commit();
+    renderSettings();
+    toast('Backup imported');
+  }
+
+  // ---------- Events ----------
+  function bindDialogAccessibility() {
+    var overlays = Array.from(document.querySelectorAll('.overlay'));
+    var returnFocus = {};
+    function topDialog() {
+      if (!$('confirmOverlay').hidden) return $('confirmOverlay');
+      return overlays.filter(function (o) { return !o.hidden; }).pop();
+    }
+    overlays.forEach(function (overlay) {
+      new MutationObserver(function () {
+        var top = topDialog();
+        document.body.classList.toggle('modal-open', !!top);
+        if (!overlay.hidden) {
+          returnFocus[overlay.id] = document.activeElement;
+          var first = overlay.id === 'confirmOverlay' ? $('confirmCancel') : overlay.querySelector('button, input');
+          if (first) first.focus({ preventScroll: true });
+        } else {
+          var previous = returnFocus[overlay.id];
+          if (previous && previous.isConnected && previous.getClientRects().length) previous.focus({ preventScroll: true });
+        }
+      }).observe(overlay, { attributes: true, attributeFilter: ['hidden'] });
+    });
+    document.addEventListener('keydown', function (e) {
+      if (e.key !== 'Tab') return;
+      var top = topDialog();
+      if (!top) return;
+      var controls = Array.from(top.querySelectorAll('button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), a[href]'))
+        .filter(function (el) { return el.getClientRects().length > 0; });
+      if (!controls.length) return;
+      var first = controls[0], last = controls[controls.length - 1];
+      if (!top.contains(document.activeElement) || (e.shiftKey && document.activeElement === first)) {
+        e.preventDefault();
+        (e.shiftKey ? last : first).focus();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault();
+        first.focus();
+      }
+    });
+  }
+
+  function bind() {
+    bindDialogAccessibility();
+    window.PenPicker.enhance($('fDate'));
+    window.PenPicker.enhance($('fTime'));
+    window.PenPicker.enhance($('fEndDate'));
+    window.PenPicker.enhance($('fOccTime'));
+    document.querySelectorAll('[data-view]').forEach(function (b) {
+      b.addEventListener('click', function () {
+        ui.view = b.getAttribute('data-view');
+        try { localStorage.setItem(VIEW_KEY, ui.view); } catch (e) { /* preference is optional */ }
+        render();
+      });
+    });
+    $('newTaskBtn').addEventListener('click', function () { openTaskModal(null, ui.view === 'tasks' ? ui.tab : 'daily'); });
+    $('addDayTaskBtn').addEventListener('click', addTaskForDay);
+    function moveMonth(offset) {
+      ui.month = new Date(ui.month.getFullYear(), ui.month.getMonth() + offset, 1);
+      ui.selectedDate = localDateKey(ui.month);
+      renderCalendar();
+    }
+    $('prevMonthBtn').addEventListener('click', function () { moveMonth(-1); });
+    $('nextMonthBtn').addEventListener('click', function () { moveMonth(1); });
+    $('todayBtn').addEventListener('click', function () {
+      var today = new Date();
+      ui.month = new Date(today.getFullYear(), today.getMonth(), 1);
+      ui.selectedDate = localDateKey(today);
+      renderCalendar();
+    });
+    $('calendarView').addEventListener('click', function (e) {
+      var taskButton = e.target.closest('[data-edit-task]');
+      if (taskButton) {
+        var task = liveTasks().find(function (t) { return t.id === taskButton.getAttribute('data-edit-task'); });
+        var occKey = taskButton.getAttribute('data-occ-date');
+        if (task && task.scheduleType !== 'once' && occKey) openOccurrence(task, occKey);
+        else if (task) openTaskModal(task);
+        return;
+      }
+      var dayButton = e.target.closest('[data-date]');
+      if (!dayButton) return;
+      ui.selectedDate = dayButton.getAttribute('data-date');
+      var selected = dateFromKey(ui.selectedDate);
+      ui.month = new Date(selected.getFullYear(), selected.getMonth(), 1);
+      renderCalendar();
+      var newButton = $('calendarGrid').querySelector('[data-date="' + ui.selectedDate + '"]');
+      if (newButton) newButton.focus({ preventScroll: true });
+      if (dayButton.hasAttribute('data-show-agenda') || window.matchMedia('(max-width: 767px)').matches) {
+        $('agendaTitle').scrollIntoView({ behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' });
+      }
+    });
+    $('columns').addEventListener('keydown', function (e) {
+      if ((e.key === 'Enter' || e.key === ' ') && e.target.classList.contains('task')) {
+        e.preventDefault();
+        var task = liveTasks().find(function (t) { return t.id === e.target.getAttribute('data-id'); });
+        if (task) openTaskModal(task);
+      }
+    });
+    $('columns').addEventListener('click', function (e) {
+      var btn = e.target.closest('[data-action]');
+      if (btn) {
+        var action = btn.getAttribute('data-action');
+        if (action === 'add') return openTaskModal(null, btn.getAttribute('data-type'));
+        var id = btn.getAttribute('data-id');
+        if (action === 'edit') return openTaskModal(state.tasks.find(function (t) { return t.id === id; }));
+        if (action === 'delete') return deleteTask(id);
+      }
+      var card = e.target.closest('.task');
+      if (card) openTaskModal(state.tasks.find(function (t) { return t.id === card.getAttribute('data-id'); }));
+    });
+
+    $('mobileTabs').addEventListener('click', function (e) {
+      var b = e.target.closest('button[data-tab]');
+      if (!b) return;
+      ui.tab = b.getAttribute('data-tab');
+      render();
+    });
+
+    $('listFilter').addEventListener('change', function (e) { ui.listFilter = e.target.value; render(); });
+    $('fScheduleType').addEventListener('change', updateScheduleFields);
+    ['fDate', 'fSpanDays', 'fRepeatEvery', 'fRepeatUnit', 'fEndDate', 'fDayOfWeek', 'fDayOfMonth', 'fWeekdays'].forEach(function (id) {
+      $(id).addEventListener('input', function () { renderCustomPreview(); renderChangedDays(); });
+      $(id).addEventListener('change', function () { renderCustomPreview(); renderChangedDays(); });
+    });
+    $('changedDaysList').addEventListener('click', function (e) {
+      var b = e.target.closest('[data-restore]');
+      if (!b) return;
+      delete ui.draftExceptions[b.getAttribute('data-restore')];
+      renderChangedDays();
+      renderCustomPreview();
+      toast('Day restored - press ' + $('saveTaskBtn').textContent + ' to keep it');
+    });
+    $('occForm').addEventListener('submit', saveOccurrence);
+    $('occRemoveBtn').addEventListener('click', removeOccurrence);
+    $('occResetBtn').addEventListener('click', function () {
+      var task = occTask();
+      if (!task) return;
+      setException(task, ui.occ.key, null);
+      closeOverlay('occOverlay');
+      commit();
+      toast('Back to normal for ' + formatDate(ui.occ.key));
+    });
+    $('occSeriesBtn').addEventListener('click', function () {
+      var task = occTask();
+      closeOverlay('occOverlay');
+      if (task) openTaskModal(task);
+    });
+    $('taskForm').addEventListener('submit', submitTask);
+    $('deleteTaskBtn').addEventListener('click', function () { if (ui.editingId) deleteTask(ui.editingId); });
+
+    document.querySelectorAll('[data-close]').forEach(function (b) {
+      b.addEventListener('click', function () { closeOverlay(b.getAttribute('data-close')); });
+    });
+    document.addEventListener('keydown', function (e) {
+      if (e.key !== 'Escape' || !$('confirmOverlay').hidden) return;
+      ['occOverlay', 'taskOverlay', 'listsOverlay', 'settingsOverlay'].some(function (id) {
+        if (!$(id).hidden) { closeOverlay(id); return true; }
+        return false;
+      });
+    });
+
+    // Lists
+    $('manageListsBtn').addEventListener('click', function () { renderListManager(); $('listsOverlay').hidden = false; });
+    $('addListForm').addEventListener('submit', function (e) {
+      e.preventDefault();
+      var name = $('newListName').value.trim();
+      if (!name) return;
+      state.lists.push({ id: uid(), name: name, updatedAt: Date.now() });
+      $('newListName').value = '';
+      renderListManager();
+      commit();
+    });
+    $('listManager').addEventListener('change', function (e) {
+      if (e.target.getAttribute('data-action') !== 'rename') return;
+      var l = findList(e.target.closest('li').getAttribute('data-id'));
+      var name = e.target.value.trim();
+      if (!l) return;
+      if (!name) { e.target.value = l.name; return; }
+      l.name = name;
+      l.updatedAt = Date.now();
+      commit();
+    });
+    $('listManager').addEventListener('click', function (e) {
+      var b = e.target.closest('[data-action="delete-list"]');
+      if (b) deleteList(b.closest('li').getAttribute('data-id'));
+    });
+
+    // Settings
+    $('settingsBtn').addEventListener('click', function () { renderSettings(); $('settingsOverlay').hidden = false; });
+    $('enableNotifBtn').addEventListener('click', async function () {
+      try { await Notification.requestPermission(); } catch (e) { /* older Safari uses callback form */ }
+      renderSettings();
+      if (Notification.permission === 'granted') toast('Reminders enabled');
+    });
+    $('testNotifBtn').addEventListener('click', async function () {
+      var ok = await showNotification('Test reminder', 'Pop-up reminders are working.', 'test');
+      if (!ok) toast('Could not show a notification on this device.', true);
+    });
+    $('sReminderMinutes').addEventListener('change', function (e) {
+      state.settings.reminderMinutes = Number(e.target.value);
+      commit();
+      renderSettings();
+    });
+    $('exportBtn').addEventListener('click', exportBackup);
+    $('importInput').addEventListener('change', function (e) {
+      var file = e.target.files && e.target.files[0];
+      e.target.value = '';
+      if (file) importBackup(file);
+    });
+
+    // Another tab of this app on the same device saved changes.
+    window.addEventListener('storage', function (e) {
+      if (e.key === STORE_KEY) { state = loadState(); render(); }
+    });
+    document.addEventListener('visibilitychange', function () {
+      if (document.hidden) return;
+      checkReminders();
+    });
+    $('installBtn').addEventListener('click', promptInstall);
+    $('installSettingsBtn').addEventListener('click', promptInstall);
+  }
+
+  // ---------- Init ----------
+  function init() {
+    fillSelectors();
+    bind();
+    save();
+    render();
+    checkReminders();
+    setInterval(checkReminders, 20000);
+    // Ask the browser not to clear this app's data when the device is low on space.
+    if (navigator.storage && navigator.storage.persist) {
+      navigator.storage.persisted().then(function (p) { return p || navigator.storage.persist(); })
+        .then(function (p) { persisted = !!p; }).catch(function () { /* not supported */ });
+    }
+    window.addEventListener('beforeinstallprompt', function (e) {
+      e.preventDefault();
+      installEvent = e;
+      renderInstall();
+    });
+    window.addEventListener('appinstalled', function () { installEvent = null; renderInstall(); toast('Installed. Open it from your apps or home screen.'); });
+    renderInstall();
+  }
+
+  init();
+})();
+
+  </script>
+</body>
+</html>
