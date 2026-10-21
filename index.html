@@ -612,6 +612,13 @@ input[type="number"] {
     ]
   };
   document.getElementById('appManifest').href = 'data:application/manifest+json;charset=utf-8,' + encodeURIComponent(JSON.stringify(manifest));
+
+  // Offline mode: uses the small sw.js file placed next to this page on the web host.
+  // If that file is missing, the app still works online; Settings explains what to do.
+  window.PO_OFFLINE = !('serviceWorker' in navigator) ? Promise.resolve('unsupported')
+    : navigator.serviceWorker.register(scope + 'sw.js?page=' + encodeURIComponent(page), { scope: scope })
+      .then(function () { return navigator.serviceWorker.ready; })
+      .then(function () { return 'ready'; }, function (e) { console.warn('Offline mode unavailable', e); return 'missing'; });
 })();
 
   </script>
@@ -901,6 +908,7 @@ input[type="number"] {
         <section class="settings-section">
           <h3>Install on this device</h3>
           <p class="muted small" id="installHelp"></p>
+          <p class="muted small" id="offlineStatus" hidden></p>
           <div class="row-actions">
             <button type="button" class="btn btn-primary btn-sm" id="installSettingsBtn" hidden>Install app</button>
           </div>
@@ -1913,6 +1921,9 @@ input[type="number"] {
     if (!notifSupported() || Notification.permission !== 'granted') return false;
     var opts = { body: body, tag: tag, icon: window.PO_ICON_PNG || undefined };
     try {
+      // Installed apps (and Android) show notifications through the offline helper when it is running.
+      var reg = 'serviceWorker' in navigator && navigator.serviceWorker.controller ? await navigator.serviceWorker.getRegistration() : null;
+      if (reg) { await reg.showNotification(title, opts); return true; }
       new Notification(title, opts);
       return true;
     } catch (e) {
@@ -1984,6 +1995,18 @@ input[type="number"] {
     $('installBtn').hidden = !canPrompt;
     $('installSettingsBtn').hidden = !canPrompt;
     $('installHelp').textContent = installHelpText();
+    renderOfflineStatus();
+  }
+
+  function renderOfflineStatus() {
+    var box = $('offlineStatus');
+    if (!window.PO_OFFLINE) { box.hidden = true; return; } // opened as a file: always offline
+    window.PO_OFFLINE.then(function (s) {
+      box.hidden = false;
+      box.textContent = s === 'ready' ? 'Offline mode is on: the app opens on this device even without an internet connection.'
+        : s === 'unsupported' ? 'This browser does not support offline mode for web apps.'
+        : 'Offline mode is off: the file sw.js was not found next to this page on the web host. Upload sw.js to the same folder, then open the app once while online.';
+    });
   }
 
   function renderStorageStatus() {
