@@ -580,6 +580,11 @@ input[type="number"] {
 .pp-links { display: inline-flex; gap: 4px; }
 @media (max-width: 767px) { .agenda-extra { font-size: 10px; } }
 
+/* Task description in the day list and the single-day editor */
+.agenda-details > .agenda-desc { font-size: 13px; color: var(--text); white-space: pre-line; overflow-wrap: anywhere; }
+.occ-desc { margin: 8px 0 0; font-size: 14px; line-height: 1.45; white-space: pre-line; overflow-wrap: anywhere; color: var(--text); }
+@media (max-width: 767px) { .agenda-details > .agenda-desc { font-size: 12px; } }
+
   </style>
   <script>
 /* Builds the install manifest at start-up, so the app can stay a single file.
@@ -689,7 +694,7 @@ input[type="number"] {
 
     <section class="columns" id="columns"></section>
     </section>
-    <footer class="planner-footer"><span>Personal Organiser</span><span>Design & Build by Cristian Barlescu.</span></footer>
+    <footer class="planner-footer"><span>Personal Organiser</span><span>Desig & Build by Cristian Barlescu.</span></footer>
   </main>
 
   <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
@@ -816,6 +821,7 @@ input[type="number"] {
           <strong id="occTaskName"></strong>
           <span id="occDate"></span>
           <span class="muted small" id="occSeries"></span>
+          <p class="occ-desc" id="occDesc" hidden></p>
         </div>
         <p class="routine-notice">Changes here apply to this day only. The rest of the schedule stays the same.</p>
         <label class="field">
@@ -1605,7 +1611,7 @@ input[type="number"] {
       tasks.slice(0, 3).forEach(function (o) {
         var t = o.task;
         html += '<button type="button" class="event-chip p-' + esc(t.priority) + (o.status === 'completed' ? ' completed' : '') + (o.changed ? ' changed' : '') +
-          '"' + occAttrs(o) + ' title="' + esc(o.time + ' ' + t.taskName + ' · ' + listName(t.listId) + (o.note ? ' · ' + o.note : '')) +
+          '"' + occAttrs(o) + ' title="' + esc(o.time + ' ' + t.taskName + ' · ' + listName(t.listId) + (t.description ? '\n' + t.description : '') + (o.note ? '\n' + o.note : '')) +
           '"><span>' + esc(o.time) + '</span> ' + esc(t.taskName) + '</button>';
       });
       if (tasks.length > 3) html += '<button type="button" class="more-events" data-date="' + key + '" data-show-agenda="true">+' + (tasks.length - 3) + ' more</button>';
@@ -1622,7 +1628,9 @@ input[type="number"] {
       var extra = [blockLabel(o), o.changed ? 'Changed for this day' : '', o.note].filter(Boolean).join(' · ');
       return '<button type="button" class="agenda-item' + (o.status === 'completed' ? ' completed' : '') + '"' + occAttrs(o) + '>' +
         '<span class="agenda-time">' + esc(o.time) + '</span><i class="dot p-' + esc(t.priority) + '" aria-hidden="true"></i>' +
-        '<span class="agenda-details"><strong>' + esc(t.taskName) + '</strong><span>' + esc(listName(t.listId)) + ' · ' + esc(formatSchedule(t)) + '</span>' +
+        '<span class="agenda-details"><strong>' + esc(t.taskName) + '</strong>' +
+        (t.description ? '<span class="agenda-desc">' + esc(t.description) + '</span>' : '') +
+        '<span>' + esc(listName(t.listId)) + ' · ' + esc(formatSchedule(t)) + '</span>' +
         (extra ? '<span class="agenda-extra">' + esc(extra) + '</span>' : '') + '</span>' +
         '<span class="agenda-status">' + esc(String(o.status).replace('_', ' ')) + '</span><span class="agenda-chevron" aria-hidden="true">&#8250;</span></button>';
     }).join('') : '<div class="agenda-empty"><span class="empty-mark" aria-hidden="true">—</span><div><strong>A little breathing room.</strong><p>' +
@@ -1825,6 +1833,8 @@ input[type="number"] {
     $('occDate').textContent = d.toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }) +
       (blockLabel(o) ? ' · ' + blockLabel(o) : '');
     $('occSeries').textContent = formatSchedule(task);
+    $('occDesc').textContent = task.description || '';
+    $('occDesc').hidden = !task.description;
     $('fOccTime').value = o.time;
     $('fOccStatus').value = o.status;
     $('fOccNote').value = o.note;
